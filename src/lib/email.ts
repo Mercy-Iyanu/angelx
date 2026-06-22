@@ -10,8 +10,12 @@ const transporter = nodemailer.createTransport({
   },
 })
 
+const appUrl =
+  process.env.APP_URL ??
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+
 export async function sendPasswordResetEmail(to: string, token: string) {
-  const url = `${process.env.APP_URL}/reset-password?token=${token}`
+  const url = `${appUrl}/reset-password?token=${token}`
 
   await transporter.sendMail({
     from: `"AngelX" <${process.env.SMTP_FROM}>`,
@@ -31,7 +35,7 @@ export async function sendPasswordResetEmail(to: string, token: string) {
 }
 
 export async function sendVerificationEmail(to: string, token: string) {
-  const url = `${process.env.APP_URL}/api/verify?token=${token}`
+  const url = `${appUrl}/api/verify?token=${token}`
 
   await transporter.sendMail({
     from: `"AngelX" <${process.env.SMTP_FROM}>`,
