@@ -1,17 +1,14 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useActionState } from 'react'
-import Link from 'next/link'
-import { signUp } from '@/actions/auth'
+import { useState } from "react";
+import { useActionState } from "react";
+import Link from "next/link";
+import { signUp } from "@/actions/auth";
 
 function TermsModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-lg flex flex-col max-h-[80vh]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">
@@ -37,7 +34,9 @@ function TermsModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-medium text-gray-800 mb-1">2. Use of Service</h3>
+            <h3 className="font-medium text-gray-800 mb-1">
+              2. Use of Service
+            </h3>
             <p>
               You agree to use this platform only for lawful purposes and in
               accordance with these terms. You are responsible for all activity
@@ -46,7 +45,9 @@ function TermsModal({ onClose }: { onClose: () => void }) {
           </section>
 
           <section>
-            <h3 className="font-medium text-gray-800 mb-1">3. Account Security</h3>
+            <h3 className="font-medium text-gray-800 mb-1">
+              3. Account Security
+            </h3>
             <p>
               You are responsible for maintaining the confidentiality of your
               password and for restricting access to your account.
@@ -88,12 +89,12 @@ function TermsModal({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 export default function SignupPage() {
-  const [state, action, pending] = useActionState(signUp, undefined)
-  const [showTerms, setShowTerms] = useState(false)
+  const [state, action, pending] = useActionState(signUp, undefined);
+  const [showTerms, setShowTerms] = useState(false);
 
   return (
     <>
@@ -103,13 +104,13 @@ export default function SignupPage() {
         Create an account
       </h1>
       <p className="text-sm text-gray-500 mb-8">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <Link href="/login" className="text-blue-600 hover:underline">
           Sign in
         </Link>
       </p>
 
-      <form action={action} className="flex flex-col gap-5">
+      <form action={action} className="flex flex-col gap-5 text-gray-900">
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email
@@ -156,7 +157,7 @@ export default function SignupPage() {
               className="mt-0.5 accent-blue-600"
             />
             <span className="text-sm text-gray-600">
-              I agree to the{' '}
+              I agree to the{" "}
               <button
                 type="button"
                 onClick={() => setShowTerms(true)}
@@ -180,9 +181,9 @@ export default function SignupPage() {
           disabled={pending}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {pending ? 'Creating account…' : 'Create account'}
+          {pending ? "Creating account…" : "Create account"}
         </button>
       </form>
     </>
-  )
+  );
 }

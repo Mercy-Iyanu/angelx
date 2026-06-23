@@ -1,14 +1,14 @@
-import { redirect } from 'next/navigation'
-import ResetPasswordForm from './form'
+import { redirect } from "next/navigation";
+import ResetPasswordForm from "./form";
 
 export default async function ResetPasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string }>
+  searchParams: Promise<{ token?: string }>;
 }) {
-  const { token } = await searchParams
+  const { token } = await searchParams;
 
-  if (!token) redirect('/forgot-password')
+  if (!token) redirect("/forgot-password");
 
-  return <ResetPasswordForm token={token} />
+  return <ResetPasswordForm token={token} />;
 }

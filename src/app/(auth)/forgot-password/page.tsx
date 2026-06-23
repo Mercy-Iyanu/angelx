@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import { useActionState } from 'react'
-import Link from 'next/link'
-import { forgotPassword } from '@/actions/auth'
+import { useActionState } from "react";
+import Link from "next/link";
+import { forgotPassword } from "@/actions/auth";
 
 export default function ForgotPasswordPage() {
-  const [state, action, pending] = useActionState(forgotPassword, undefined)
+  const [state, action, pending] = useActionState(forgotPassword, undefined);
 
   if (state?.message) {
     return (
@@ -15,14 +15,11 @@ export default function ForgotPasswordPage() {
           Check your inbox
         </h1>
         <p className="text-sm text-gray-500 mb-8">{state.message}</p>
-        <Link
-          href="/login"
-          className="text-sm text-blue-600 hover:underline"
-        >
+        <Link href="/login" className="text-sm text-blue-600 hover:underline">
           Back to sign in
         </Link>
       </div>
-    )
+    );
   }
 
   return (
@@ -34,7 +31,7 @@ export default function ForgotPasswordPage() {
         Enter your email and we&apos;ll send you a reset link.
       </p>
 
-      <form action={action} className="flex flex-col gap-5">
+      <form action={action} className="flex flex-col gap-5 text-gray-900">
         <div className="flex flex-col gap-1">
           <label htmlFor="email" className="text-sm font-medium text-gray-700">
             Email
@@ -57,7 +54,7 @@ export default function ForgotPasswordPage() {
           disabled={pending}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {pending ? 'Sending…' : 'Send reset link'}
+          {pending ? "Sending…" : "Send reset link"}
         </button>
 
         <Link
@@ -68,5 +65,5 @@ export default function ForgotPasswordPage() {
         </Link>
       </form>
     </>
-  )
+  );
 }
