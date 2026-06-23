@@ -3,7 +3,8 @@ import { getSession } from '@/lib/auth'
 import { connectDB } from '@/lib/mongodb'
 import User from '@/models/User'
 import School from '@/models/School'
-import DashboardClient from './dashboard-client'
+import DashboardShell from './shell'
+import DashboardContent from './dashboard-client'
 
 export default async function DashboardPage() {
   const session = await getSession()
@@ -20,17 +21,16 @@ export default async function DashboardPage() {
         .lean()
     : null
 
-  return (
-    <DashboardClient
-      userEmail={user.email as string}
-      school={
-        school
-          ? {
-              name: school.name as string,
-              nappsVerificationStatus: school.nappsVerificationStatus as string,
-            }
-          : null
+  const schoolData = school
+    ? {
+        name: school.name as string,
+        nappsVerificationStatus: school.nappsVerificationStatus as string,
       }
-    />
+    : null
+
+  return (
+    <DashboardShell userEmail={user.email as string} school={schoolData}>
+      <DashboardContent school={schoolData} />
+    </DashboardShell>
   )
 }
