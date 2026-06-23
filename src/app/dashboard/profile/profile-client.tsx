@@ -1,43 +1,43 @@
-"use client"
+"use client";
 
 const ROLE_LABELS: Record<string, string> = {
   proprietor: "Proprietor",
   bursar: "Bursar",
   admin: "Admin",
   head_teacher: "Head Teacher",
-}
+};
 
 const STATUS_STYLE: Record<string, string> = {
   verified: "bg-green-100 text-green-700",
   rejected: "bg-red-100 text-red-700",
   pending: "bg-yellow-100 text-yellow-700",
-}
+};
 
 type SchoolProfile = {
-  name: string
-  nappsRegNumber: string
-  schoolType: string
-  yearEstablished: number
-  studentPopulation: number
-  lga: string
-  town: string
-  address: string
-  phone: string
-  proprietorName: string
-  proprietorPhone: string
-  nappsVerificationStatus: string
-}
+  name: string;
+  nappsRegNumber: string;
+  schoolType: string;
+  yearEstablished: number;
+  studentPopulation: number;
+  lga: string;
+  town: string;
+  address: string;
+  phone: string;
+  proprietorName: string;
+  proprietorPhone: string;
+  nappsVerificationStatus: string;
+};
 
-type UserProfile = { email: string; role: string }
+type UserProfile = { email: string; role: string };
 
 export default function ProfileClient({
   user,
   school,
 }: {
-  user: UserProfile
-  school: SchoolProfile | null
+  user: UserProfile;
+  school: SchoolProfile | null;
 }) {
-  const status = school?.nappsVerificationStatus ?? "pending"
+  const status = school?.nappsVerificationStatus ?? "pending";
 
   return (
     <div className="max-w-2xl">
@@ -61,7 +61,7 @@ export default function ProfileClient({
               </span>
               {status === "pending" && (
                 <p className="text-sm text-gray-500">
-                  Under review by AngelX admin. This usually takes 1–3 business
+                  Under review by NAPPS admin. This usually takes 1–3 business
                   days.
                 </p>
               )}
@@ -81,9 +81,15 @@ export default function ProfileClient({
           {/* School information */}
           <Section title="School information">
             <Row label="School name" value={school.name} />
-            <Row label="NAPPS registration number" value={school.nappsRegNumber} />
+            <Row
+              label="NAPPS registration number"
+              value={school.nappsRegNumber}
+            />
             <Row label="School type" value={school.schoolType} />
-            <Row label="Year established" value={String(school.yearEstablished)} />
+            <Row
+              label="Year established"
+              value={String(school.yearEstablished)}
+            />
             <Row
               label="Student population"
               value={school.studentPopulation.toLocaleString()}
@@ -119,15 +125,15 @@ export default function ProfileClient({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function Section({
   title,
   children,
 }: {
-  title: string
-  children: React.ReactNode
+  title: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className="mb-6 rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -138,7 +144,7 @@ function Section({
       </div>
       <div className="divide-y divide-gray-100">{children}</div>
     </div>
-  )
+  );
 }
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -147,5 +153,5 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-sm text-gray-500 w-44 shrink-0">{label}</span>
       <span className="text-sm text-gray-900 font-medium">{value}</span>
     </div>
-  )
+  );
 }

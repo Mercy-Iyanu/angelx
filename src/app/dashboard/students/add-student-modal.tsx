@@ -45,7 +45,7 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           </p>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="First name" error={state?.errors?.firstName?.[0]}>
             <input
               name="firstName"
@@ -64,7 +64,7 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Date of birth" error={state?.errors?.dateOfBirth?.[0]}>
             <input
               name="dateOfBirth"
@@ -110,7 +110,7 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           />
         </Field>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Parent / Guardian name" hint="Optional">
             <input
               name="parentName"

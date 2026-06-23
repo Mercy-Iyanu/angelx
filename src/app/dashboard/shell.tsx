@@ -31,22 +31,41 @@ export default function DashboardShell({
   children: React.ReactNode
 }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+
+  const navItems = (
+    <>
+      <NavItem href="/dashboard" label="Dashboard" icon={HOME_ICON} active={pathname === "/dashboard"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+      <NavItem href="/dashboard/students" label="Students" icon={STUDENTS_ICON} active={pathname.startsWith("/dashboard/students")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+      <NavItem href="/dashboard/profile" label="Profile" icon={USER_ICON} active={pathname === "/dashboard/profile"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+    </>
+  )
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top nav */}
-      <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0">
+      <nav className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors shrink-0"
+            aria-label="Open menu"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
           <span className="font-semibold text-gray-900 shrink-0">AngelX</span>
           {school && (
             <>
-              <span className="text-gray-300 select-none shrink-0">·</span>
-              <span className="text-sm font-medium text-gray-700 truncate">
+              <span className="text-gray-300 select-none shrink-0 hidden sm:inline">·</span>
+              <span className="text-sm font-medium text-gray-700 truncate hidden sm:block">
                 {school.name} NAPPS
               </span>
               <span
-                className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 ${statusStyle(school.nappsVerificationStatus)}`}
+                className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0 hidden sm:inline ${statusStyle(school.nappsVerificationStatus)}`}
               >
                 {school.nappsVerificationStatus.charAt(0).toUpperCase() +
                   school.nappsVerificationStatus.slice(1)}
@@ -68,9 +87,30 @@ export default function DashboardShell({
       </nav>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+        {/* Mobile sidebar overlay */}
+        {mobileOpen && (
+          <div className="sm:hidden fixed inset-0 z-40 flex">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+            <aside className="relative z-50 w-64 bg-white border-r border-gray-200 flex flex-col py-4">
+              <div className="flex justify-end px-2 mb-3">
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                  aria-label="Close menu"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <nav className="flex flex-col gap-1 px-2">{navItems}</nav>
+            </aside>
+          </div>
+        )}
+
+        {/* Desktop sidebar */}
         <aside
-          className={`bg-white border-r border-gray-200 flex flex-col py-4 shrink-0 transition-[width] duration-200 overflow-hidden ${
+          className={`hidden sm:flex bg-white border-r border-gray-200 flex-col py-4 shrink-0 transition-[width] duration-200 overflow-hidden ${
             collapsed ? "w-14" : "w-52"
           }`}
         >
@@ -98,33 +138,11 @@ export default function DashboardShell({
             </button>
           </div>
 
-          <nav className="flex flex-col gap-1 px-2">
-            <NavItem
-              href="/dashboard"
-              label="Dashboard"
-              icon={HOME_ICON}
-              active={pathname === "/dashboard"}
-              collapsed={collapsed}
-            />
-            <NavItem
-              href="/dashboard/students"
-              label="Students"
-              icon={STUDENTS_ICON}
-              active={pathname.startsWith("/dashboard/students")}
-              collapsed={collapsed}
-            />
-            <NavItem
-              href="/dashboard/profile"
-              label="Profile"
-              icon={USER_ICON}
-              active={pathname === "/dashboard/profile"}
-              collapsed={collapsed}
-            />
-          </nav>
+          <nav className="flex flex-col gap-1 px-2">{navItems}</nav>
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 px-8 py-8 overflow-auto">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8 overflow-auto">{children}</main>
       </div>
     </div>
   )
@@ -136,17 +154,20 @@ function NavItem({
   icon,
   active,
   collapsed,
+  onClick,
 }: {
   href: string
   label: string
   icon: string
   active: boolean
   collapsed: boolean
+  onClick?: () => void
 }) {
   return (
     <Link
       href={href}
       title={label}
+      onClick={onClick}
       className={`flex items-center gap-3 px-2 py-2 text-sm font-medium rounded-lg transition-colors ${
         active ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-50"
       }`}
