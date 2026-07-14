@@ -6,7 +6,7 @@ import { connectDB } from '@/lib/mongodb'
 import Student from '@/models/Student'
 import User from '@/models/User'
 import { getSession } from '@/lib/auth'
-import { CLASS_LEVELS } from '@/lib/student-constants'
+import { CLASS_LEVELS, ADMISSION_STATUSES } from '@/lib/student-constants'
 
 export type StudentFormState =
   | {
@@ -175,7 +175,8 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       parentPhone: row.parentPhone?.trim() || undefined,
       schoolId: user.schoolId,
       enrollmentDate: new Date(),
-      status: 'active',
+      admissionStatus: 'Active',
+      currentBalance: 0,
     })
   }
 
@@ -196,4 +197,58 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
 
   revalidatePath('/dashboard/students')
   return { success: true, imported, skipped, errors }
+}
+
+export type UpdateStudentStatusState =
+  | {
+      success?: boolean
+      errors?: {
+        admissionStatus?: string[]
+        currentBalance?: string[]
+      }
+      message?: string
+    }
+  | undefined
+
+export async function updateStudentStatus(
+  studentId: string,
+  _prevState: UpdateStudentStatusState,
+  formData: FormData
+): Promise<UpdateStudentStatusState> {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
+  const admissionStatus = formData.get('admissionStatus') as string
+  const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
+
+  const errors: NonNullable<UpdateStudentStatusState>['errors'] = {}
+
+  if (!admissionStatus || !ADMISSION_STATUSES.includes(admissionStatus as never)) {
+    errors.admissionStatus = ['Please select a valid admission status.']
+  }
+
+  const currentBalance = Number(currentBalanceRaw)
+  if (!currentBalanceRaw || isNaN(currentBalance)) {
+    errors.currentBalance = ['Please enter a valid balance.']
+  }
+
+  if (Object.keys(errors).length > 0) return { errors }
+
+  await connectDB()
+
+  const user = await User.findById(session.userId).select('schoolId').lean()
+  if (!user?.schoolId) redirect('/dashboard/students')
+
+  const student = await Student.findOneAndUpdate(
+    { _id: studentId, schoolId: user.schoolId },
+    { admissionStatus, currentBalance }
+  )
+
+  if (!student) {
+    return { message: 'Student not found.' }
+  }
+
+  revalidatePath(`/dashboard/students/${studentId}`)
+  revalidatePath('/dashboard/students')
+  return { success: true, message: 'Student updated successfully.' }
 }

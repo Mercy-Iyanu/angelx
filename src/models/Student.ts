@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
-import { CLASS_LEVELS } from '@/lib/student-constants'
+import { CLASS_LEVELS, ADMISSION_STATUSES } from '@/lib/student-constants'
 
 export interface IStudent extends Document {
   firstName: string
@@ -12,7 +12,8 @@ export interface IStudent extends Document {
   parentPhone?: string
   schoolId: mongoose.Types.ObjectId
   enrollmentDate: Date
-  status: 'active' | 'inactive' | 'withdrawn'
+  admissionStatus: (typeof ADMISSION_STATUSES)[number]
+  currentBalance: number
   createdAt: Date
   updatedAt: Date
 }
@@ -29,11 +30,12 @@ const StudentSchema = new Schema<IStudent>(
     parentPhone: { type: String, trim: true },
     schoolId: { type: Schema.Types.ObjectId, ref: 'School', required: true },
     enrollmentDate: { type: Date, default: Date.now },
-    status: {
+    admissionStatus: {
       type: String,
-      enum: ['active', 'inactive', 'withdrawn'],
-      default: 'active',
+      enum: ADMISSION_STATUSES,
+      default: 'Active',
     },
+    currentBalance: { type: Number, default: 0 },
   },
   { timestamps: true }
 )

@@ -32,7 +32,7 @@ export default async function StudentsPage() {
   const students = user.schoolId
     ? await Student.find({ schoolId: user.schoolId })
         .select(
-          'firstName lastName gender classLevel admissionNumber parentName enrollmentDate status'
+          'firstName lastName gender classLevel admissionNumber parentName enrollmentDate'
         )
         .sort({ lastName: 1, firstName: 1 })
         .lean()
@@ -50,7 +50,6 @@ export default async function StudentsPage() {
       s.enrollmentDate instanceof Date
         ? s.enrollmentDate.toISOString()
         : new Date().toISOString(),
-    status: s.status as string,
   }))
 
   return (

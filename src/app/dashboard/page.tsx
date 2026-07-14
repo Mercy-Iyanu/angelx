@@ -41,7 +41,7 @@ export default async function DashboardPage() {
               $group: {
                 _id: null,
                 total: { $sum: 1 },
-                active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+                active: { $sum: { $cond: [{ $eq: ['$admissionStatus', 'Active'] }, 1, 0] } },
                 male: { $sum: { $cond: [{ $eq: ['$gender', 'male'] }, 1, 0] } },
                 female: { $sum: { $cond: [{ $eq: ['$gender', 'female'] }, 1, 0] } },
               },

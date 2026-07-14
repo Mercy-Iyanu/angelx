@@ -14,7 +14,6 @@ type Student = {
   admissionNumber: string
   parentName: string
   enrollmentDate: string
-  status: string
 }
 
 function formatDate(iso: string) {
@@ -228,7 +227,16 @@ export default function StudentsClient({
                 <tbody className="divide-y divide-gray-100">
                   {filtered.length > 0 ? (
                     filtered.map((s) => (
-                      <tr key={s.id} className="hover:bg-gray-50 transition-colors">
+                      <tr
+                        key={s.id}
+                        onClick={() => router.push(`/dashboard/students/${s.id}`)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") router.push(`/dashboard/students/${s.id}`)
+                        }}
+                        tabIndex={0}
+                        role="button"
+                        className="hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-50"
+                      >
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {s.firstName} {s.lastName}
                         </td>
