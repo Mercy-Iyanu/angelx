@@ -66,14 +66,19 @@ function parseCSV(text: string): ImportRow[] {
         get(raw, "parentName", "parent name", "parent_name", "guardian") || undefined,
       parentPhone:
         get(raw, "parentPhone", "parent phone", "parent_phone", "guardian phone") || undefined,
+      admissionStatus:
+        get(raw, "admissionStatus", "admission status", "admission_status") || undefined,
+      currentBalance:
+        get(raw, "currentBalance", "current balance", "current_balance", "balance") || undefined,
     }
   })
 }
 
 function downloadTemplate() {
   const headers =
-    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone"
-  const example = "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678"
+    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone,admissionStatus,currentBalance"
+  const example =
+    "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678,Active,0"
   const blob = new Blob([headers + "\n" + example], { type: "text/csv" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -226,7 +231,13 @@ export default function ImportCSVModal({
                       </code>
                     )
                   )}
-                  {["admissionNumber", "parentName", "parentPhone"].map((h) => (
+                  {[
+                    "admissionNumber",
+                    "parentName",
+                    "parentPhone",
+                    "admissionStatus",
+                    "currentBalance",
+                  ].map((h) => (
                     <code
                       key={h}
                       className="text-xs bg-white border border-dashed border-gray-300 rounded px-1.5 py-0.5 text-gray-400"
@@ -238,7 +249,8 @@ export default function ImportCSVModal({
                 <p className="text-xs text-gray-400">
                   Date format: <strong>YYYY-MM-DD</strong> · Gender:{" "}
                   <strong>male</strong> or <strong>female</strong> · Class levels:{" "}
-                  {CLASS_LEVELS.slice(0, 3).join(", ")}&hellip;
+                  {CLASS_LEVELS.slice(0, 3).join(", ")}&hellip; · Admission status and
+                  balance default to <strong>Active</strong> and <strong>0</strong> if left blank.
                 </p>
               </div>
 
@@ -270,7 +282,7 @@ export default function ImportCSVModal({
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {["Name", "Class", "Gender", "DOB", "Adm. No.", "Parent"].map(
+                    {["Name", "Class", "Gender", "DOB", "Adm. No.", "Parent", "Status", "Balance"].map(
                       (h) => (
                         <th
                           key={h}
@@ -293,6 +305,8 @@ export default function ImportCSVModal({
                       <td className="px-3 py-2 text-gray-500">{r.dateOfBirth || <span className="text-red-400">—</span>}</td>
                       <td className="px-3 py-2 text-gray-500">{r.admissionNumber || "—"}</td>
                       <td className="px-3 py-2 text-gray-500">{r.parentName || "—"}</td>
+                      <td className="px-3 py-2 text-gray-500">{r.admissionStatus || "Active"}</td>
+                      <td className="px-3 py-2 text-gray-500">{r.currentBalance || "0"}</td>
                     </tr>
                   ))}
                 </tbody>

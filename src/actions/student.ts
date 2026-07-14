@@ -19,6 +19,8 @@ export type StudentFormState =
         classLevel?: string[]
         admissionNumber?: string[]
         parentPhone?: string[]
+        admissionStatus?: string[]
+        currentBalance?: string[]
       }
       message?: string
     }
@@ -41,6 +43,9 @@ export async function createStudent(
     parentName: (formData.get('parentName') as string)?.trim() || undefined,
     parentPhone: (formData.get('parentPhone') as string)?.trim() || undefined,
   }
+
+  const admissionStatusRaw = (formData.get('admissionStatus') as string)?.trim()
+  const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
 
   const errors: NonNullable<StudentFormState>['errors'] = {}
 
@@ -66,6 +71,25 @@ export async function createStudent(
 
   if (raw.parentPhone && !/^\+?[0-9\s\-]{10,15}$/.test(raw.parentPhone)) {
     errors.parentPhone = ['Please enter a valid phone number.']
+  }
+
+  let admissionStatus = 'Active'
+  if (admissionStatusRaw) {
+    if (!ADMISSION_STATUSES.includes(admissionStatusRaw as never)) {
+      errors.admissionStatus = ['Please select a valid admission status.']
+    } else {
+      admissionStatus = admissionStatusRaw
+    }
+  }
+
+  let currentBalance = 0
+  if (currentBalanceRaw) {
+    const parsed = Number(currentBalanceRaw)
+    if (isNaN(parsed)) {
+      errors.currentBalance = ['Please enter a valid balance.']
+    } else {
+      currentBalance = parsed
+    }
   }
 
   if (Object.keys(errors).length > 0) return { errors }
@@ -94,6 +118,8 @@ export async function createStudent(
     gender: raw.gender as 'male' | 'female',
     dateOfBirth: new Date(raw.dateOfBirth),
     schoolId: user.schoolId,
+    admissionStatus: admissionStatus as (typeof ADMISSION_STATUSES)[number],
+    currentBalance,
   })
 
   revalidatePath('/dashboard/students')
@@ -109,6 +135,8 @@ export type ImportRow = {
   admissionNumber?: string
   parentName?: string
   parentPhone?: string
+  admissionStatus?: string
+  currentBalance?: string
 }
 
 export type ImportResult = {
@@ -159,6 +187,30 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       rowErrors.push(`class level (got "${row.classLevel}")`)
     }
 
+    let admissionStatus: (typeof ADMISSION_STATUSES)[number] = 'Active'
+    const admissionStatusRaw = row.admissionStatus?.trim()
+    if (admissionStatusRaw) {
+      const match = ADMISSION_STATUSES.find(
+        (s) => s.toLowerCase() === admissionStatusRaw.toLowerCase()
+      )
+      if (!match) {
+        rowErrors.push(`admission status (got "${admissionStatusRaw}")`)
+      } else {
+        admissionStatus = match
+      }
+    }
+
+    let currentBalance = 0
+    const currentBalanceRaw = row.currentBalance?.trim()
+    if (currentBalanceRaw) {
+      const parsed = Number(currentBalanceRaw)
+      if (isNaN(parsed)) {
+        rowErrors.push('current balance (must be a number)')
+      } else {
+        currentBalance = parsed
+      }
+    }
+
     if (rowErrors.length > 0) {
       errors.push(`Row ${rowNum}: invalid ${rowErrors.join(', ')}`)
       continue
@@ -175,8 +227,8 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       parentPhone: row.parentPhone?.trim() || undefined,
       schoolId: user.schoolId,
       enrollmentDate: new Date(),
-      admissionStatus: 'Active',
-      currentBalance: 0,
+      admissionStatus,
+      currentBalance,
     })
   }
 
