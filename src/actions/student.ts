@@ -1,12 +1,24 @@
 'use server'
 
+import { randomBytes } from 'crypto'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { connectDB } from '@/lib/mongodb'
 import Student from '@/models/Student'
 import User from '@/models/User'
+import School from '@/models/School'
 import { getSession } from '@/lib/auth'
+import { sendBalanceInvoiceEmail } from '@/lib/email'
 import { CLASS_LEVELS, ADMISSION_STATUSES } from '@/lib/student-constants'
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function formatNaira(amount: number) {
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+  }).format(amount)
+}
 
 export type StudentFormState =
   | {
@@ -19,6 +31,7 @@ export type StudentFormState =
         classLevel?: string[]
         admissionNumber?: string[]
         parentPhone?: string[]
+        parentEmail?: string[]
         admissionStatus?: string[]
         currentBalance?: string[]
       }
@@ -42,6 +55,7 @@ export async function createStudent(
     admissionNumber: (formData.get('admissionNumber') as string)?.trim() || undefined,
     parentName: (formData.get('parentName') as string)?.trim() || undefined,
     parentPhone: (formData.get('parentPhone') as string)?.trim() || undefined,
+    parentEmail: (formData.get('parentEmail') as string)?.trim().toLowerCase() || undefined,
   }
 
   const admissionStatusRaw = (formData.get('admissionStatus') as string)?.trim()
@@ -71,6 +85,10 @@ export async function createStudent(
 
   if (raw.parentPhone && !/^\+?[0-9\s\-]{10,15}$/.test(raw.parentPhone)) {
     errors.parentPhone = ['Please enter a valid phone number.']
+  }
+
+  if (raw.parentEmail && !EMAIL_RE.test(raw.parentEmail)) {
+    errors.parentEmail = ['Please enter a valid email address.']
   }
 
   let admissionStatus = 'Active'
@@ -135,6 +153,7 @@ export type ImportRow = {
   admissionNumber?: string
   parentName?: string
   parentPhone?: string
+  parentEmail?: string
   admissionStatus?: string
   currentBalance?: string
 }
@@ -187,6 +206,11 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       rowErrors.push(`class level (got "${row.classLevel}")`)
     }
 
+    const parentEmailRaw = row.parentEmail?.trim().toLowerCase()
+    if (parentEmailRaw && !EMAIL_RE.test(parentEmailRaw)) {
+      rowErrors.push(`parent email (got "${parentEmailRaw}")`)
+    }
+
     let admissionStatus: (typeof ADMISSION_STATUSES)[number] = 'Active'
     const admissionStatusRaw = row.admissionStatus?.trim()
     if (admissionStatusRaw) {
@@ -225,6 +249,7 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       admissionNumber: row.admissionNumber?.trim() || undefined,
       parentName: row.parentName?.trim() || undefined,
       parentPhone: row.parentPhone?.trim() || undefined,
+      parentEmail: parentEmailRaw || undefined,
       schoolId: user.schoolId,
       enrollmentDate: new Date(),
       admissionStatus,
@@ -251,29 +276,31 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
   return { success: true, imported, skipped, errors }
 }
 
-export type UpdateStudentStatusState =
+export type UpdateStudentState =
   | {
       success?: boolean
       errors?: {
         admissionStatus?: string[]
         currentBalance?: string[]
+        parentEmail?: string[]
       }
       message?: string
     }
   | undefined
 
-export async function updateStudentStatus(
+export async function updateStudent(
   studentId: string,
-  _prevState: UpdateStudentStatusState,
+  _prevState: UpdateStudentState,
   formData: FormData
-): Promise<UpdateStudentStatusState> {
+): Promise<UpdateStudentState> {
   const session = await getSession()
   if (!session) redirect('/login')
 
   const admissionStatus = formData.get('admissionStatus') as string
   const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
+  const parentEmailRaw = (formData.get('parentEmail') as string)?.trim().toLowerCase()
 
-  const errors: NonNullable<UpdateStudentStatusState>['errors'] = {}
+  const errors: NonNullable<UpdateStudentState>['errors'] = {}
 
   if (!admissionStatus || !ADMISSION_STATUSES.includes(admissionStatus as never)) {
     errors.admissionStatus = ['Please select a valid admission status.']
@@ -282,6 +309,10 @@ export async function updateStudentStatus(
   const currentBalance = Number(currentBalanceRaw)
   if (!currentBalanceRaw || isNaN(currentBalance)) {
     errors.currentBalance = ['Please enter a valid balance.']
+  }
+
+  if (parentEmailRaw && !EMAIL_RE.test(parentEmailRaw)) {
+    errors.parentEmail = ['Please enter a valid email address.']
   }
 
   if (Object.keys(errors).length > 0) return { errors }
@@ -293,7 +324,9 @@ export async function updateStudentStatus(
 
   const student = await Student.findOneAndUpdate(
     { _id: studentId, schoolId: user.schoolId },
-    { admissionStatus, currentBalance }
+    parentEmailRaw
+      ? { $set: { admissionStatus, currentBalance, parentEmail: parentEmailRaw } }
+      : { $set: { admissionStatus, currentBalance }, $unset: { parentEmail: '' } }
   )
 
   if (!student) {
@@ -303,4 +336,122 @@ export async function updateStudentStatus(
   revalidatePath(`/dashboard/students/${studentId}`)
   revalidatePath('/dashboard/students')
   return { success: true, message: 'Student updated successfully.' }
+}
+
+export type EmailInvoiceState =
+  | { success?: boolean; message?: string }
+  | undefined
+
+export async function emailBalanceInvoice(
+  studentId: string,
+  _prevState: EmailInvoiceState,
+  formData: FormData
+): Promise<EmailInvoiceState> {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
+  const parentEmailRaw = (formData.get('parentEmail') as string)?.trim().toLowerCase()
+  if (!parentEmailRaw || !EMAIL_RE.test(parentEmailRaw)) {
+    return { message: 'Please enter a valid parent email address.' }
+  }
+
+  await connectDB()
+
+  const user = await User.findById(session.userId).select('schoolId').lean()
+  if (!user?.schoolId) redirect('/dashboard/students')
+
+  const student = await Student.findOne({ _id: studentId, schoolId: user.schoolId })
+  if (!student) return { message: 'Student not found.' }
+
+  if (student.currentBalance <= 0) {
+    return { message: 'This student has no outstanding balance.' }
+  }
+
+  if (student.parentEmail !== parentEmailRaw) {
+    student.parentEmail = parentEmailRaw
+    await student.save()
+  }
+
+  const school = await School.findById(user.schoolId).select('name').lean()
+
+  try {
+    await sendBalanceInvoiceEmail(parentEmailRaw, {
+      studentName: `${student.firstName} ${student.lastName}`,
+      schoolName: (school?.name as string) ?? 'your school',
+      balance: formatNaira(student.currentBalance),
+    })
+  } catch {
+    return { message: 'Could not send the invoice email. Please try again.' }
+  }
+
+  revalidatePath(`/dashboard/students/${studentId}`)
+  return { success: true, message: `Invoice emailed to ${parentEmailRaw}.` }
+}
+
+export type ClearanceState =
+  | { success?: boolean; message?: string }
+  | undefined
+
+export async function confirmClearance(
+  studentId: string,
+  _prevState: ClearanceState,
+  _formData: FormData
+): Promise<ClearanceState> {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
+  await connectDB()
+
+  const user = await User.findById(session.userId).select('schoolId').lean()
+  if (!user?.schoolId) redirect('/dashboard/students')
+
+  const certificateNumber = `TC-${new Date().getFullYear()}-${randomBytes(4).toString('hex').toUpperCase()}`
+
+  const student = await Student.findOneAndUpdate(
+    { _id: studentId, schoolId: user.schoolId },
+    {
+      currentBalance: 0,
+      admissionStatus: 'Exited-Cleared',
+      tcCertificateNumber: certificateNumber,
+      tcIssuedAt: new Date(),
+    }
+  )
+
+  if (!student) return { message: 'Student not found.' }
+
+  revalidatePath(`/dashboard/students/${studentId}`)
+  revalidatePath('/dashboard/students')
+  revalidatePath('/dashboard')
+  return { success: true, message: 'Clearance approved. Transfer Certificate issued.' }
+}
+
+export async function withdrawWithoutClearance(
+  studentId: string,
+  _prevState: ClearanceState,
+  formData: FormData
+): Promise<ClearanceState> {
+  const session = await getSession()
+  if (!session) redirect('/login')
+
+  const reason = (formData.get('reason') as string)?.trim()
+  if (!reason) {
+    return { message: 'Please provide a reason for withdrawing without clearance.' }
+  }
+
+  await connectDB()
+
+  const user = await User.findById(session.userId).select('schoolId').lean()
+  if (!user?.schoolId) redirect('/dashboard/students')
+
+  const student = await Student.findOneAndUpdate(
+    { _id: studentId, schoolId: user.schoolId },
+    { admissionStatus: 'Exited-Unresolved', exitNotes: reason }
+  )
+
+  if (!student) return { message: 'Student not found.' }
+
+  revalidatePath(`/dashboard/students/${studentId}`)
+  revalidatePath('/dashboard/students')
+  revalidatePath('/dashboard')
+  return { success: true, message: 'Student marked as exited without clearance.' }
 }

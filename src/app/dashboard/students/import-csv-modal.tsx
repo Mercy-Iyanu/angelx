@@ -66,6 +66,8 @@ function parseCSV(text: string): ImportRow[] {
         get(raw, "parentName", "parent name", "parent_name", "guardian") || undefined,
       parentPhone:
         get(raw, "parentPhone", "parent phone", "parent_phone", "guardian phone") || undefined,
+      parentEmail:
+        get(raw, "parentEmail", "parent email", "parent_email", "guardian email") || undefined,
       admissionStatus:
         get(raw, "admissionStatus", "admission status", "admission_status") || undefined,
       currentBalance:
@@ -76,9 +78,9 @@ function parseCSV(text: string): ImportRow[] {
 
 function downloadTemplate() {
   const headers =
-    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone,admissionStatus,currentBalance"
+    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone,parentEmail,admissionStatus,currentBalance"
   const example =
-    "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678,Active,0"
+    "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678,ngozi@example.com,Active,0"
   const blob = new Blob([headers + "\n" + example], { type: "text/csv" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -235,6 +237,7 @@ export default function ImportCSVModal({
                     "admissionNumber",
                     "parentName",
                     "parentPhone",
+                    "parentEmail",
                     "admissionStatus",
                     "currentBalance",
                   ].map((h) => (

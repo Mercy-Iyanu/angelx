@@ -1,33 +1,38 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useActionState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { updateStudentStatus } from "@/actions/student"
+import { updateStudent } from "@/actions/student"
 import { ADMISSION_STATUSES } from "@/lib/student-constants"
 
 const inp =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
 
-export default function EditStatusModal({
+export default function EditStudentModal({
   studentId,
   admissionStatus,
   currentBalance,
+  parentEmail,
   onClose,
 }: {
   studentId: string
   admissionStatus: string
   currentBalance: number
+  parentEmail: string
   onClose: () => void
 }) {
   const router = useRouter()
-  const updateWithId = updateStudentStatus.bind(null, studentId)
+  const updateWithId = updateStudent.bind(null, studentId)
   const [state, action, pending] = useActionState(updateWithId, undefined)
 
-  if (state?.success) {
-    router.refresh()
-    onClose()
-    return null
-  }
+  useEffect(() => {
+    if (state?.success) {
+      router.refresh()
+      onClose()
+    }
+  }, [state?.success, router, onClose])
+
+  if (state?.success) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -72,6 +77,19 @@ export default function EditStatusModal({
                 type="number"
                 step="0.01"
                 defaultValue={currentBalance}
+                className={inp}
+              />
+            </Field>
+
+            <Field
+              label="Parent email"
+              error={state?.errors?.parentEmail?.[0]}
+            >
+              <input
+                name="parentEmail"
+                type="email"
+                placeholder="parent@example.com"
+                defaultValue={parentEmail}
                 className={inp}
               />
             </Field>

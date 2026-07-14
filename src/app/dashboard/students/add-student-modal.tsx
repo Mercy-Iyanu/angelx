@@ -133,6 +133,19 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           </Field>
         </div>
 
+        <Field
+          label="Parent email"
+          hint="Optional"
+          error={state?.errors?.parentEmail?.[0]}
+        >
+          <input
+            name="parentEmail"
+            type="email"
+            placeholder="parent@example.com"
+            className={inp}
+          />
+        </Field>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field
             label="Admission status"

@@ -10,10 +10,14 @@ export interface IStudent extends Document {
   admissionNumber?: string
   parentName?: string
   parentPhone?: string
+  parentEmail?: string
   schoolId: mongoose.Types.ObjectId
   enrollmentDate: Date
   admissionStatus: (typeof ADMISSION_STATUSES)[number]
   currentBalance: number
+  tcCertificateNumber?: string
+  tcIssuedAt?: Date
+  exitNotes?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -28,6 +32,7 @@ const StudentSchema = new Schema<IStudent>(
     admissionNumber: { type: String, trim: true },
     parentName: { type: String, trim: true },
     parentPhone: { type: String, trim: true },
+    parentEmail: { type: String, trim: true, lowercase: true },
     schoolId: { type: Schema.Types.ObjectId, ref: 'School', required: true },
     enrollmentDate: { type: Date, default: Date.now },
     admissionStatus: {
@@ -36,6 +41,9 @@ const StudentSchema = new Schema<IStudent>(
       default: 'Active',
     },
     currentBalance: { type: Number, default: 0 },
+    tcCertificateNumber: { type: String, trim: true },
+    tcIssuedAt: { type: Date },
+    exitNotes: { type: String, trim: true },
   },
   { timestamps: true }
 )
