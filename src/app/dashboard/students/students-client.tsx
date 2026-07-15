@@ -14,7 +14,12 @@ type Student = {
   admissionNumber: string
   parentName: string
   enrollmentDate: string
+  admissionStatus: string
+  currentBalance: number
+  createdAt: string
 }
+
+type SortBy = "recent" | "name" | "balance"
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-NG", {
@@ -22,6 +27,40 @@ function formatDate(iso: string) {
     month: "short",
     year: "numeric",
   })
+}
+
+function formatBalance(amount: number) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+  }).format(amount)
+}
+
+const statusStyle = (s: string) =>
+  s === "Active"
+    ? "bg-green-100 text-green-700"
+    : s === "Exited-Cleared"
+      ? "bg-gray-100 text-gray-600"
+      : s === "Exited-Unresolved"
+        ? "bg-red-100 text-red-700"
+        : "bg-yellow-100 text-yellow-700"
+
+const isLeft = (status: string) =>
+  status === "Exited-Cleared" || status === "Exited-Unresolved"
+
+function sortStudents(students: Student[], sortBy: SortBy): Student[] {
+  const copy = [...students]
+  if (sortBy === "recent") {
+    return copy.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }
+  if (sortBy === "balance") {
+    return copy.sort((a, b) => b.currentBalance - a.currentBalance)
+  }
+  return copy.sort((a, b) =>
+    `${a.lastName} ${a.firstName}`.localeCompare(`${b.lastName} ${b.firstName}`)
+  )
 }
 
 export default function StudentsClient({
@@ -32,6 +71,7 @@ export default function StudentsClient({
   hasSchool: boolean
 }) {
   const [search, setSearch] = useState("")
+  const [sortBy, setSortBy] = useState<SortBy>("recent")
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [modal, setModal] = useState<"manual" | "csv" | null>(null)
   const router = useRouter()
@@ -43,6 +83,8 @@ export default function StudentsClient({
           .includes(search.toLowerCase())
       )
     : students
+
+  const sorted = sortStudents(filtered, sortBy)
 
   const handleSuccess = () => {
     setModal(null)
@@ -172,9 +214,9 @@ export default function StudentsClient({
         <EmptyState onAdd={() => setModal("manual")} onImport={() => setModal("csv")} />
       ) : (
         <>
-          {/* Search */}
-          <div className="mb-4">
-            <div className="relative max-w-sm">
+          {/* Search + sort */}
+          <div className="mb-4 flex items-center gap-3 flex-wrap">
+            <div className="relative max-w-sm flex-1 min-w-[200px]">
               <svg
                 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
@@ -196,6 +238,22 @@ export default function StudentsClient({
                 className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
               />
             </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="sort" className="text-xs text-gray-500 shrink-0">
+                Sort by
+              </label>
+              <select
+                id="sort"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                className="text-sm border border-gray-300 rounded-lg px-2.5 py-2 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+              >
+                <option value="recent">Recently added</option>
+                <option value="name">Name (A–Z)</option>
+                <option value="balance">Outstanding balance</option>
+              </select>
+            </div>
           </div>
 
           {/* Table */}
@@ -206,6 +264,9 @@ export default function StudentsClient({
                   <tr className="border-b border-gray-100 bg-gray-50">
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Name
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Status
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Class
@@ -220,13 +281,16 @@ export default function StudentsClient({
                       Parent / Guardian
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Balance
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Enrolled
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {filtered.length > 0 ? (
-                    filtered.map((s) => (
+                  {sorted.length > 0 ? (
+                    sorted.map((s) => (
                       <tr
                         key={s.id}
                         onClick={() => router.push(`/dashboard/students/${s.id}`)}
@@ -240,6 +304,13 @@ export default function StudentsClient({
                         <td className="px-4 py-3 font-medium text-gray-900">
                           {s.firstName} {s.lastName}
                         </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusStyle(s.admissionStatus)}`}
+                          >
+                            {isLeft(s.admissionStatus) ? "Left" : s.admissionStatus}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-gray-600">{s.classLevel}</td>
                         <td className="px-4 py-3 text-gray-600 capitalize">{s.gender}</td>
                         <td className="px-4 py-3 text-gray-500">
@@ -247,6 +318,15 @@ export default function StudentsClient({
                         </td>
                         <td className="px-4 py-3 text-gray-500">
                           {s.parentName || "—"}
+                        </td>
+                        <td
+                          className={`px-4 py-3 whitespace-nowrap ${
+                            s.currentBalance > 0
+                              ? "text-red-600 font-medium"
+                              : "text-gray-400"
+                          }`}
+                        >
+                          {s.currentBalance > 0 ? formatBalance(s.currentBalance) : "—"}
                         </td>
                         <td className="px-4 py-3 text-gray-500">
                           {formatDate(s.enrollmentDate)}
@@ -256,7 +336,7 @@ export default function StudentsClient({
                   ) : (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={8}
                         className="px-4 py-8 text-center text-sm text-gray-400"
                       >
                         No students match &ldquo;{search}&rdquo;
