@@ -127,6 +127,18 @@ export default async function StudentDetailPage({
               admissionStatus={student.admissionStatus as string}
               currentBalance={student.currentBalance as number}
               parentEmail={(student.parentEmail as string) || ""}
+              student={{
+                firstName: student.firstName as string,
+                lastName: student.lastName as string,
+                dateOfBirth: dob.toISOString().split("T")[0],
+                gender: student.gender as string,
+                classLevel: student.classLevel as string,
+                admissionNumber: (student.admissionNumber as string) || "",
+                parentName: (student.parentName as string) || "",
+                parentPhone: (student.parentPhone as string) || "",
+                parentEmail: (student.parentEmail as string) || "",
+                currentBalance: student.currentBalance as number,
+              }}
             />
           </div>
         </div>

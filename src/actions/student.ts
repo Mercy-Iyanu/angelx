@@ -253,8 +253,15 @@ export type UpdateStudentState =
   | {
       success?: boolean
       errors?: {
-        currentBalance?: string[]
+        firstName?: string[]
+        lastName?: string[]
+        dateOfBirth?: string[]
+        gender?: string[]
+        classLevel?: string[]
+        admissionNumber?: string[]
+        parentPhone?: string[]
         parentEmail?: string[]
+        currentBalance?: string[]
       }
       message?: string
     }
@@ -268,18 +275,52 @@ export async function updateStudent(
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
+  const raw = {
+    firstName: (formData.get('firstName') as string)?.trim(),
+    lastName: (formData.get('lastName') as string)?.trim(),
+    dateOfBirth: (formData.get('dateOfBirth') as string)?.trim(),
+    gender: formData.get('gender') as string,
+    classLevel: formData.get('classLevel') as string,
+    admissionNumber: (formData.get('admissionNumber') as string)?.trim() || undefined,
+    parentName: (formData.get('parentName') as string)?.trim() || undefined,
+    parentPhone: (formData.get('parentPhone') as string)?.trim() || undefined,
+  }
   const parentEmailRaw = (formData.get('parentEmail') as string)?.trim().toLowerCase()
+  const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
 
   const errors: NonNullable<UpdateStudentState>['errors'] = {}
 
-  const currentBalance = Number(currentBalanceRaw)
-  if (!currentBalanceRaw || isNaN(currentBalance)) {
-    errors.currentBalance = ['Please enter a valid balance.']
+  if (!raw.firstName) errors.firstName = ['First name is required.']
+  if (!raw.lastName) errors.lastName = ['Last name is required.']
+
+  if (!raw.dateOfBirth) {
+    errors.dateOfBirth = ['Date of birth is required.']
+  } else {
+    const dob = new Date(raw.dateOfBirth)
+    if (isNaN(dob.getTime()) || dob >= new Date()) {
+      errors.dateOfBirth = ['Please enter a valid date of birth.']
+    }
+  }
+
+  if (!raw.gender || !['male', 'female'].includes(raw.gender)) {
+    errors.gender = ['Please select a gender.']
+  }
+
+  if (!raw.classLevel || !CLASS_LEVELS.includes(raw.classLevel as never)) {
+    errors.classLevel = ['Please select a valid class level.']
+  }
+
+  if (raw.parentPhone && !/^\+?[0-9\s\-]{10,15}$/.test(raw.parentPhone)) {
+    errors.parentPhone = ['Please enter a valid phone number.']
   }
 
   if (parentEmailRaw && !EMAIL_RE.test(parentEmailRaw)) {
     errors.parentEmail = ['Please enter a valid email address.']
+  }
+
+  const currentBalance = Number(currentBalanceRaw)
+  if (!currentBalanceRaw || isNaN(currentBalance)) {
+    errors.currentBalance = ['Please enter a valid balance.']
   }
 
   if (Object.keys(errors).length > 0) return { errors }
@@ -289,11 +330,47 @@ export async function updateStudent(
   const user = await User.findById(session.userId).select('schoolId').lean()
   if (!user?.schoolId) redirect('/dashboard/students')
 
+  if (raw.admissionNumber) {
+    const duplicate = await Student.findOne({
+      schoolId: user.schoolId,
+      admissionNumber: raw.admissionNumber,
+      _id: { $ne: studentId },
+    })
+    if (duplicate) {
+      return {
+        errors: { admissionNumber: ['This admission number is already in use.'] },
+      }
+    }
+  }
+
+  const setFields: Record<string, unknown> = {
+    firstName: raw.firstName,
+    lastName: raw.lastName,
+    dateOfBirth: new Date(raw.dateOfBirth),
+    gender: raw.gender as 'male' | 'female',
+    classLevel: raw.classLevel,
+    currentBalance,
+  }
+  const unsetFields: Record<string, ''> = {}
+
+  if (raw.admissionNumber) setFields.admissionNumber = raw.admissionNumber
+  else unsetFields.admissionNumber = ''
+
+  if (raw.parentName) setFields.parentName = raw.parentName
+  else unsetFields.parentName = ''
+
+  if (raw.parentPhone) setFields.parentPhone = raw.parentPhone
+  else unsetFields.parentPhone = ''
+
+  if (parentEmailRaw) setFields.parentEmail = parentEmailRaw
+  else unsetFields.parentEmail = ''
+
+  const update: Record<string, unknown> = { $set: setFields }
+  if (Object.keys(unsetFields).length > 0) update.$unset = unsetFields
+
   const student = await Student.findOneAndUpdate(
     { _id: studentId, schoolId: user.schoolId },
-    parentEmailRaw
-      ? { $set: { currentBalance, parentEmail: parentEmailRaw } }
-      : { $set: { currentBalance }, $unset: { parentEmail: '' } }
+    update
   )
 
   if (!student) {

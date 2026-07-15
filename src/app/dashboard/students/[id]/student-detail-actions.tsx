@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import EditStudentModal from "./edit-student-modal"
+import EditStudentModal, { type EditableStudent } from "./edit-student-modal"
 import ExitClearanceModal from "./exit-clearance-modal"
 
 export default function StudentDetailActions({
@@ -10,12 +10,14 @@ export default function StudentDetailActions({
   admissionStatus,
   currentBalance,
   parentEmail,
+  student,
 }: {
   studentId: string
   studentName: string
   admissionStatus: string
   currentBalance: number
   parentEmail: string
+  student: EditableStudent
 }) {
   const [editOpen, setEditOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
@@ -27,8 +29,7 @@ export default function StudentDetailActions({
       {editOpen && (
         <EditStudentModal
           studentId={studentId}
-          currentBalance={currentBalance}
-          parentEmail={parentEmail}
+          student={student}
           onClose={() => setEditOpen(false)}
         />
       )}
