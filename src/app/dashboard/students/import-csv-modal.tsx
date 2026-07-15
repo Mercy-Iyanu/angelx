@@ -68,8 +68,6 @@ function parseCSV(text: string): ImportRow[] {
         get(raw, "parentPhone", "parent phone", "parent_phone", "guardian phone") || undefined,
       parentEmail:
         get(raw, "parentEmail", "parent email", "parent_email", "guardian email") || undefined,
-      admissionStatus:
-        get(raw, "admissionStatus", "admission status", "admission_status") || undefined,
       currentBalance:
         get(raw, "currentBalance", "current balance", "current_balance", "balance") || undefined,
     }
@@ -78,9 +76,9 @@ function parseCSV(text: string): ImportRow[] {
 
 function downloadTemplate() {
   const headers =
-    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone,parentEmail,admissionStatus,currentBalance"
+    "firstName,lastName,dateOfBirth,gender,classLevel,admissionNumber,parentName,parentPhone,parentEmail,currentBalance"
   const example =
-    "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678,ngozi@example.com,Active,0"
+    "Chidera,Okafor,2015-03-15,male,Primary 3,ADM001,Ngozi Okafor,08012345678,ngozi@example.com,0"
   const blob = new Blob([headers + "\n" + example], { type: "text/csv" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -238,7 +236,6 @@ export default function ImportCSVModal({
                     "parentName",
                     "parentPhone",
                     "parentEmail",
-                    "admissionStatus",
                     "currentBalance",
                   ].map((h) => (
                     <code
@@ -252,8 +249,9 @@ export default function ImportCSVModal({
                 <p className="text-xs text-gray-400">
                   Date format: <strong>YYYY-MM-DD</strong> · Gender:{" "}
                   <strong>male</strong> or <strong>female</strong> · Class levels:{" "}
-                  {CLASS_LEVELS.slice(0, 3).join(", ")}&hellip; · Admission status and
-                  balance default to <strong>Active</strong> and <strong>0</strong> if left blank.
+                  {CLASS_LEVELS.slice(0, 3).join(", ")}&hellip; · All new students start
+                  as <strong>Active</strong> with a balance of <strong>0</strong> unless a
+                  balance is given.
                 </p>
               </div>
 
@@ -285,7 +283,7 @@ export default function ImportCSVModal({
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50">
-                    {["Name", "Class", "Gender", "DOB", "Adm. No.", "Parent", "Status", "Balance"].map(
+                    {["Name", "Class", "Gender", "DOB", "Adm. No.", "Parent", "Balance"].map(
                       (h) => (
                         <th
                           key={h}
@@ -308,7 +306,6 @@ export default function ImportCSVModal({
                       <td className="px-3 py-2 text-gray-500">{r.dateOfBirth || <span className="text-red-400">—</span>}</td>
                       <td className="px-3 py-2 text-gray-500">{r.admissionNumber || "—"}</td>
                       <td className="px-3 py-2 text-gray-500">{r.parentName || "—"}</td>
-                      <td className="px-3 py-2 text-gray-500">{r.admissionStatus || "Active"}</td>
                       <td className="px-3 py-2 text-gray-500">{r.currentBalance || "0"}</td>
                     </tr>
                   ))}

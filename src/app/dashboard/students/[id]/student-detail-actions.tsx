@@ -27,7 +27,6 @@ export default function StudentDetailActions({
       {editOpen && (
         <EditStudentModal
           studentId={studentId}
-          admissionStatus={admissionStatus}
           currentBalance={currentBalance}
           parentEmail={parentEmail}
           onClose={() => setEditOpen(false)}

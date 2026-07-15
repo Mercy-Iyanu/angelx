@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react"
 import { createStudent } from "@/actions/student"
-import { CLASS_LEVELS, ADMISSION_STATUSES } from "@/lib/student-constants"
+import { CLASS_LEVELS } from "@/lib/student-constants"
 
 const inp =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
@@ -146,34 +146,19 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           />
         </Field>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field
-            label="Admission status"
-            hint="Optional — defaults to Active"
-            error={state?.errors?.admissionStatus?.[0]}
-          >
-            <select name="admissionStatus" defaultValue="Active" className={inp}>
-              {ADMISSION_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field
-            label="Current balance (₦)"
-            hint="Optional — defaults to 0"
-            error={state?.errors?.currentBalance?.[0]}
-          >
-            <input
-              name="currentBalance"
-              type="number"
-              step="0.01"
-              placeholder="0"
-              className={inp}
-            />
-          </Field>
-        </div>
+        <Field
+          label="Current balance (₦)"
+          hint="Optional — defaults to 0"
+          error={state?.errors?.currentBalance?.[0]}
+        >
+          <input
+            name="currentBalance"
+            type="number"
+            step="0.01"
+            placeholder="0"
+            className={inp}
+          />
+        </Field>
       </div>
 
       <div className="px-6 py-4 border-t border-gray-100">

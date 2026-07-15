@@ -9,7 +9,7 @@ import User from '@/models/User'
 import School from '@/models/School'
 import { getSession } from '@/lib/auth'
 import { sendBalanceInvoiceEmail } from '@/lib/email'
-import { CLASS_LEVELS, ADMISSION_STATUSES } from '@/lib/student-constants'
+import { CLASS_LEVELS } from '@/lib/student-constants'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -32,7 +32,6 @@ export type StudentFormState =
         admissionNumber?: string[]
         parentPhone?: string[]
         parentEmail?: string[]
-        admissionStatus?: string[]
         currentBalance?: string[]
       }
       message?: string
@@ -58,7 +57,6 @@ export async function createStudent(
     parentEmail: (formData.get('parentEmail') as string)?.trim().toLowerCase() || undefined,
   }
 
-  const admissionStatusRaw = (formData.get('admissionStatus') as string)?.trim()
   const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
 
   const errors: NonNullable<StudentFormState>['errors'] = {}
@@ -89,15 +87,6 @@ export async function createStudent(
 
   if (raw.parentEmail && !EMAIL_RE.test(raw.parentEmail)) {
     errors.parentEmail = ['Please enter a valid email address.']
-  }
-
-  let admissionStatus = 'Active'
-  if (admissionStatusRaw) {
-    if (!ADMISSION_STATUSES.includes(admissionStatusRaw as never)) {
-      errors.admissionStatus = ['Please select a valid admission status.']
-    } else {
-      admissionStatus = admissionStatusRaw
-    }
   }
 
   let currentBalance = 0
@@ -136,7 +125,6 @@ export async function createStudent(
     gender: raw.gender as 'male' | 'female',
     dateOfBirth: new Date(raw.dateOfBirth),
     schoolId: user.schoolId,
-    admissionStatus: admissionStatus as (typeof ADMISSION_STATUSES)[number],
     currentBalance,
   })
 
@@ -154,7 +142,6 @@ export type ImportRow = {
   parentName?: string
   parentPhone?: string
   parentEmail?: string
-  admissionStatus?: string
   currentBalance?: string
 }
 
@@ -211,19 +198,6 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       rowErrors.push(`parent email (got "${parentEmailRaw}")`)
     }
 
-    let admissionStatus: (typeof ADMISSION_STATUSES)[number] = 'Active'
-    const admissionStatusRaw = row.admissionStatus?.trim()
-    if (admissionStatusRaw) {
-      const match = ADMISSION_STATUSES.find(
-        (s) => s.toLowerCase() === admissionStatusRaw.toLowerCase()
-      )
-      if (!match) {
-        rowErrors.push(`admission status (got "${admissionStatusRaw}")`)
-      } else {
-        admissionStatus = match
-      }
-    }
-
     let currentBalance = 0
     const currentBalanceRaw = row.currentBalance?.trim()
     if (currentBalanceRaw) {
@@ -252,7 +226,6 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       parentEmail: parentEmailRaw || undefined,
       schoolId: user.schoolId,
       enrollmentDate: new Date(),
-      admissionStatus,
       currentBalance,
     })
   }
@@ -280,7 +253,6 @@ export type UpdateStudentState =
   | {
       success?: boolean
       errors?: {
-        admissionStatus?: string[]
         currentBalance?: string[]
         parentEmail?: string[]
       }
@@ -296,15 +268,10 @@ export async function updateStudent(
   const session = await getSession()
   if (!session) redirect('/login')
 
-  const admissionStatus = formData.get('admissionStatus') as string
   const currentBalanceRaw = (formData.get('currentBalance') as string)?.trim()
   const parentEmailRaw = (formData.get('parentEmail') as string)?.trim().toLowerCase()
 
   const errors: NonNullable<UpdateStudentState>['errors'] = {}
-
-  if (!admissionStatus || !ADMISSION_STATUSES.includes(admissionStatus as never)) {
-    errors.admissionStatus = ['Please select a valid admission status.']
-  }
 
   const currentBalance = Number(currentBalanceRaw)
   if (!currentBalanceRaw || isNaN(currentBalance)) {
@@ -325,8 +292,8 @@ export async function updateStudent(
   const student = await Student.findOneAndUpdate(
     { _id: studentId, schoolId: user.schoolId },
     parentEmailRaw
-      ? { $set: { admissionStatus, currentBalance, parentEmail: parentEmailRaw } }
-      : { $set: { admissionStatus, currentBalance }, $unset: { parentEmail: '' } }
+      ? { $set: { currentBalance, parentEmail: parentEmailRaw } }
+      : { $set: { currentBalance }, $unset: { parentEmail: '' } }
   )
 
   if (!student) {
@@ -405,12 +372,20 @@ export async function confirmClearance(
   const user = await User.findById(session.userId).select('schoolId').lean()
   if (!user?.schoolId) redirect('/dashboard/students')
 
+  const existing = await Student.findOne({ _id: studentId, schoolId: user.schoolId })
+  if (!existing) return { message: 'Student not found.' }
+
+  if (existing.currentBalance > 0) {
+    return {
+      message: `Cannot clear: outstanding balance of ${formatNaira(existing.currentBalance)} must be settled first.`,
+    }
+  }
+
   const certificateNumber = `TC-${new Date().getFullYear()}-${randomBytes(4).toString('hex').toUpperCase()}`
 
   const student = await Student.findOneAndUpdate(
     { _id: studentId, schoolId: user.schoolId },
     {
-      currentBalance: 0,
       admissionStatus: 'Exited-Cleared',
       tcCertificateNumber: certificateNumber,
       tcIssuedAt: new Date(),

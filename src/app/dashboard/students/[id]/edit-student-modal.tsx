@@ -3,20 +3,17 @@
 import { useActionState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { updateStudent } from "@/actions/student"
-import { ADMISSION_STATUSES } from "@/lib/student-constants"
 
 const inp =
   "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
 
 export default function EditStudentModal({
   studentId,
-  admissionStatus,
   currentBalance,
   parentEmail,
   onClose,
 }: {
   studentId: string
-  admissionStatus: string
   currentBalance: number
   parentEmail: string
   onClose: () => void
@@ -60,16 +57,6 @@ export default function EditStudentModal({
                 {state.message}
               </p>
             )}
-
-            <Field label="Admission status" error={state?.errors?.admissionStatus?.[0]}>
-              <select name="admissionStatus" defaultValue={admissionStatus} className={inp}>
-                {ADMISSION_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </Field>
 
             <Field label="Current balance (₦)" error={state?.errors?.currentBalance?.[0]}>
               <input
