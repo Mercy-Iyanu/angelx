@@ -22,11 +22,13 @@ export default function StudentDetailActions({
   const [editOpen, setEditOpen] = useState(false)
   const [withdrawOpen, setWithdrawOpen] = useState(false)
 
+  const isExited =
+    admissionStatus === "Exited-Cleared" || admissionStatus === "Exited-Unresolved"
   const canWithdraw = admissionStatus === "Active" || admissionStatus === "Suspended"
 
   return (
     <>
-      {editOpen && (
+      {editOpen && !isExited && (
         <EditStudentModal
           studentId={studentId}
           student={student}
@@ -51,12 +53,21 @@ export default function StudentDetailActions({
             Withdraw student
           </button>
         )}
-        <button
-          onClick={() => setEditOpen(true)}
-          className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          Edit
-        </button>
+        {isExited ? (
+          <span
+            title="This student has exited and their record is locked."
+            className="text-xs text-gray-400"
+          >
+            Record locked — student has exited
+          </span>
+        ) : (
+          <button
+            onClick={() => setEditOpen(true)}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Edit
+          </button>
+        )}
       </div>
     </>
   )

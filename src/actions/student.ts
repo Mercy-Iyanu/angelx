@@ -330,6 +330,18 @@ export async function updateStudent(
   const user = await User.findById(session.userId).select('schoolId').lean()
   if (!user?.schoolId) redirect('/dashboard/students')
 
+  const existing = await Student.findOne({ _id: studentId, schoolId: user.schoolId })
+    .select('admissionStatus')
+    .lean()
+  if (!existing) return { message: 'Student not found.' }
+
+  if (
+    existing.admissionStatus === 'Exited-Cleared' ||
+    existing.admissionStatus === 'Exited-Unresolved'
+  ) {
+    return { message: 'This student has exited and their record is locked.' }
+  }
+
   if (raw.admissionNumber) {
     const duplicate = await Student.findOne({
       schoolId: user.schoolId,
