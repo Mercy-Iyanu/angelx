@@ -11,6 +11,7 @@ export interface IStudent extends Document {
   parentName?: string
   parentPhone?: string
   parentEmail?: string
+  photoUrl?: string
   schoolId: mongoose.Types.ObjectId
   enrollmentDate: Date
   admissionStatus: (typeof ADMISSION_STATUSES)[number]
@@ -33,6 +34,7 @@ const StudentSchema = new Schema<IStudent>(
     parentName: { type: String, trim: true },
     parentPhone: { type: String, trim: true },
     parentEmail: { type: String, trim: true, lowercase: true },
+    photoUrl: { type: String, trim: true },
     schoolId: { type: Schema.Types.ObjectId, ref: 'School', required: true },
     enrollmentDate: { type: Date, default: Date.now },
     admissionStatus: {

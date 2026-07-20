@@ -17,6 +17,7 @@ type Student = {
   admissionStatus: string
   currentBalance: number
   createdAt: string
+  photoUrl: string
 }
 
 type SortBy = "recent" | "name" | "balance"
@@ -47,6 +48,10 @@ const statusStyle = (s: string) =>
 
 const isLeft = (status: string) =>
   status === "Exited-Cleared" || status === "Exited-Unresolved"
+
+function initials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+}
 
 function sortStudents(students: Student[], sortBy: SortBy): Student[] {
   const copy = [...students]
@@ -302,7 +307,21 @@ export default function StudentsClient({
                         className="hover:bg-gray-50 transition-colors cursor-pointer focus:outline-none focus:bg-gray-50"
                       >
                         <td className="px-4 py-3 font-medium text-gray-900">
-                          {s.firstName} {s.lastName}
+                          <div className="flex items-center gap-2.5">
+                            {s.photoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={s.photoUrl}
+                                alt=""
+                                className="w-7 h-7 rounded-full object-cover border border-gray-200 shrink-0"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-[10px] font-semibold shrink-0">
+                                {initials(s.firstName, s.lastName)}
+                              </div>
+                            )}
+                            {s.firstName} {s.lastName}
+                          </div>
                         </td>
                         <td className="px-4 py-3">
                           <span

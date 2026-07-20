@@ -9,6 +9,7 @@ import User from '@/models/User'
 import School from '@/models/School'
 import { getSession } from '@/lib/auth'
 import { sendBalanceInvoiceEmail } from '@/lib/email'
+import { uploadStudentPhoto, deleteStudentPhoto } from '@/lib/blob'
 import { CLASS_LEVELS } from '@/lib/student-constants'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -33,6 +34,7 @@ export type StudentFormState =
         parentPhone?: string[]
         parentEmail?: string[]
         currentBalance?: string[]
+        photo?: string[]
       }
       message?: string
     }
@@ -120,12 +122,24 @@ export async function createStudent(
     }
   }
 
+  const photoFile = formData.get('photo') as File | null
+  let photoUrl: string | undefined
+  if (photoFile && photoFile.size > 0) {
+    try {
+      photoUrl = await uploadStudentPhoto(photoFile)
+    } catch (e) {
+      console.error('Student photo upload failed:', e)
+      return { errors: { photo: [e instanceof Error ? e.message : 'Could not upload photo.'] } }
+    }
+  }
+
   await Student.create({
     ...raw,
     gender: raw.gender as 'male' | 'female',
     dateOfBirth: new Date(raw.dateOfBirth),
     schoolId: user.schoolId,
     currentBalance,
+    photoUrl,
   })
 
   revalidatePath('/dashboard/students')
@@ -262,6 +276,7 @@ export type UpdateStudentState =
         parentPhone?: string[]
         parentEmail?: string[]
         currentBalance?: string[]
+        photo?: string[]
       }
       message?: string
     }
@@ -331,7 +346,7 @@ export async function updateStudent(
   if (!user?.schoolId) redirect('/dashboard/students')
 
   const existing = await Student.findOne({ _id: studentId, schoolId: user.schoolId })
-    .select('admissionStatus')
+    .select('admissionStatus photoUrl')
     .lean()
   if (!existing) return { message: 'Student not found.' }
 
@@ -355,6 +370,20 @@ export async function updateStudent(
     }
   }
 
+  const photoFile = formData.get('photo') as File | null
+  let photoUrl: string | undefined
+  if (photoFile && photoFile.size > 0) {
+    try {
+      photoUrl = await uploadStudentPhoto(photoFile)
+    } catch (e) {
+      console.error('Student photo upload failed:', e)
+      return { errors: { photo: [e instanceof Error ? e.message : 'Could not upload photo.'] } }
+    }
+    if (existing.photoUrl) {
+      await deleteStudentPhoto(existing.photoUrl)
+    }
+  }
+
   const setFields: Record<string, unknown> = {
     firstName: raw.firstName,
     lastName: raw.lastName,
@@ -364,6 +393,8 @@ export async function updateStudent(
     currentBalance,
   }
   const unsetFields: Record<string, ''> = {}
+
+  if (photoUrl) setFields.photoUrl = photoUrl
 
   if (raw.admissionNumber) setFields.admissionNumber = raw.admissionNumber
   else unsetFields.admissionNumber = ''

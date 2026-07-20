@@ -34,6 +34,10 @@ function formatBalance(amount: number) {
   }).format(amount);
 }
 
+function initials(firstName: string, lastName: string) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
 const statusStyle = (s: string) =>
   s === "Active"
     ? "bg-green-100 text-green-700"
@@ -107,13 +111,27 @@ export default async function StudentDetailPage({
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">
-              {student.firstName as string} {student.lastName as string}
-            </h1>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {student.classLevel as string}
-            </p>
+          <div className="flex items-center gap-4">
+            {student.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={student.photoUrl as string}
+                alt=""
+                className="w-14 h-14 rounded-full object-cover border border-gray-200 shrink-0"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center text-sm font-semibold shrink-0">
+                {initials(student.firstName as string, student.lastName as string)}
+              </div>
+            )}
+            <div>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {student.firstName as string} {student.lastName as string}
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {student.classLevel as string}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <span
@@ -138,6 +156,7 @@ export default async function StudentDetailPage({
                 parentPhone: (student.parentPhone as string) || "",
                 parentEmail: (student.parentEmail as string) || "",
                 currentBalance: student.currentBalance as number,
+                photoUrl: (student.photoUrl as string) || "",
               }}
             />
           </div>

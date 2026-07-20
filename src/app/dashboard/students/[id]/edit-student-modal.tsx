@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { updateStudent } from "@/actions/student"
 import { CLASS_LEVELS } from "@/lib/student-constants"
@@ -19,6 +19,7 @@ export type EditableStudent = {
   parentPhone: string
   parentEmail: string
   currentBalance: number
+  photoUrl: string
 }
 
 export default function EditStudentModal({
@@ -33,6 +34,8 @@ export default function EditStudentModal({
   const router = useRouter()
   const updateWithId = updateStudent.bind(null, studentId)
   const [state, action, pending] = useActionState(updateWithId, undefined)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState<string | null>(null)
 
   useEffect(() => {
     if (state?.success) {
@@ -106,6 +109,42 @@ export default function EditStudentModal({
                 </select>
               </Field>
             </div>
+
+            <Field
+              label="Photo"
+              hint="Optional"
+              error={photoError || state?.errors?.photo?.[0]}
+            >
+              <div className="flex items-center gap-3">
+                {photoPreview || student.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photoPreview || student.photoUrl}
+                    alt="Preview"
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200" />
+                )}
+                <input
+                  name="photo"
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file && file.size > 4 * 1024 * 1024) {
+                      setPhotoError("Photo must be smaller than 4MB.")
+                      setPhotoPreview(null)
+                      e.target.value = ""
+                      return
+                    }
+                    setPhotoError(null)
+                    setPhotoPreview(file ? URL.createObjectURL(file) : null)
+                  }}
+                  className="text-sm text-gray-600 file:mr-3 file:rounded-lg file:border file:border-gray-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-50"
+                />
+              </div>
+            </Field>
 
             <Field label="Class level" error={state?.errors?.classLevel?.[0]}>
               <select name="classLevel" defaultValue={student.classLevel} className={inp}>
