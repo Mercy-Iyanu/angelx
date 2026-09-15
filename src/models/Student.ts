@@ -56,6 +56,12 @@ StudentSchema.index(
   { unique: true, sparse: true }
 )
 
+// Cross-school enrollment search (Phase 3) pre-filters on lastName/firstName
+StudentSchema.index({ lastName: 1, firstName: 1 })
+
+// TC certificate numbers are public verification references — unique across all schools
+StudentSchema.index({ tcCertificateNumber: 1 }, { unique: true, sparse: true })
+
 const Student: Model<IStudent> =
   mongoose.models.Student ?? mongoose.model<IStudent>('Student', StudentSchema)
 

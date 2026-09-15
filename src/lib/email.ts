@@ -43,6 +43,29 @@ export async function sendBalanceInvoiceEmail(
   })
 }
 
+export async function sendFeeStandingAlertEmail(
+  to: string,
+  details: {
+    studentName: string
+    schoolName: string
+    requestingSchoolName: string
+    balance: string
+  }
+) {
+  const { studentName, schoolName, requestingSchoolName, balance } = details
+
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM,
+    to,
+    subject: `Fee standing check for ${studentName} — outstanding balance`,
+    html: `
+      <p>${requestingSchoolName} recently checked ${studentName}'s enrollment record on the NAPPS school network and found an outstanding balance with ${schoolName}.</p>
+      <p><strong>Amount due: ${balance}</strong></p>
+      <p>Please contact ${schoolName} to settle this balance.</p>
+    `,
+  })
+}
+
 export async function sendPasswordResetEmail(to: string, token: string) {
   const link = `${process.env.APP_URL}/reset-password?token=${token}`
 

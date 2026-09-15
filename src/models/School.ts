@@ -41,7 +41,7 @@ const SchoolSchema = new Schema<ISchool>(
     nappsVerificationStatus: {
       type: String,
       enum: ['pending', 'verified', 'rejected'],
-      default: 'pending',
+      default: 'verified',
     },
   },
   { timestamps: true }

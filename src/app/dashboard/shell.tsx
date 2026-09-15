@@ -20,6 +20,7 @@ const STUDENTS_ICON =
   "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
 const USER_ICON =
   "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+const SEARCH_ICON = "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
 
 export default function DashboardShell({
   userEmail,
@@ -38,6 +39,7 @@ export default function DashboardShell({
     <>
       <NavItem href="/dashboard" label="Dashboard" icon={HOME_ICON} active={pathname === "/dashboard"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
       <NavItem href="/dashboard/students" label="Students" icon={STUDENTS_ICON} active={pathname.startsWith("/dashboard/students")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+      <NavItem href="/dashboard/search" label="Fee Standing Search" icon={SEARCH_ICON} active={pathname.startsWith("/dashboard/search")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
       <NavItem href="/dashboard/profile" label="Profile" icon={USER_ICON} active={pathname === "/dashboard/profile"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
     </>
   )

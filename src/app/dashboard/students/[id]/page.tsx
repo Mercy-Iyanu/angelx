@@ -8,6 +8,7 @@ import School from "@/models/School";
 import Student from "@/models/Student";
 import DashboardShell from "../../shell";
 import StudentDetailActions from "./student-detail-actions";
+import { generateVerificationQr } from "@/lib/qr";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-NG", {
@@ -86,6 +87,14 @@ export default async function StudentDetailPage({
 
   const dob = student.dateOfBirth as Date;
   const enrollmentDate = student.enrollmentDate as Date;
+
+  const tcCertificateNumber = student.tcCertificateNumber as string | undefined;
+  const verificationUrl = tcCertificateNumber
+    ? `${process.env.APP_URL}/verify-tc/${tcCertificateNumber}`
+    : null;
+  const verificationQr = tcCertificateNumber
+    ? await generateVerificationQr(tcCertificateNumber)
+    : null;
 
   return (
     <DashboardShell userEmail={user.email as string} school={shellSchool}>
@@ -201,16 +210,16 @@ export default async function StudentDetailPage({
           />
         </dl>
 
-        {student.tcCertificateNumber && (
+        {tcCertificateNumber && (
           <div className="mx-6 mb-6 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4">
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
               Transfer Certificate
             </p>
-            <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+            <div className="flex flex-wrap items-start gap-x-8 gap-y-3">
               <div>
                 <dt className="text-xs text-gray-400">Certificate number</dt>
                 <dd className="text-sm font-medium text-gray-900">
-                  {student.tcCertificateNumber as string}
+                  {tcCertificateNumber}
                 </dd>
               </div>
               <div>
@@ -219,6 +228,34 @@ export default async function StudentDetailPage({
                   {formatDate(student.tcIssuedAt as Date)}
                 </dd>
               </div>
+              {verificationQr && (
+                <div>
+                  <dt className="text-xs text-gray-400 mb-1">Verify</dt>
+                  <dd>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={verificationQr}
+                      alt="Scan to verify this Transfer Certificate"
+                      className="w-20 h-20 rounded-lg border border-gray-200 bg-white"
+                    />
+                  </dd>
+                </div>
+              )}
+              {verificationUrl && (
+                <div className="min-w-0">
+                  <dt className="text-xs text-gray-400 mb-1">Verification link</dt>
+                  <dd className="text-sm">
+                    <a
+                      href={verificationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {verificationUrl}
+                    </a>
+                  </dd>
+                </div>
+              )}
             </div>
           </div>
         )}
