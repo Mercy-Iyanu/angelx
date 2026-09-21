@@ -150,6 +150,10 @@ export type FeeStandingResult = {
   currentBalance: number
   exitNotes: string
   tcCertificateNumber: string
+  schoolPhone: string
+  proprietorName: string
+  proprietorPhone: string
+  contactEmail: string
 }
 
 export type FeeStandingState =
@@ -173,9 +177,21 @@ export async function requestFeeStandingReport(
     return { message: 'This student is already enrolled at your school.' }
   }
 
-  const targetSchool = await School.findById(target.schoolId).select('name').lean()
+  const targetSchool = await School.findById(target.schoolId)
+    .select('name phone proprietorName proprietorPhone createdBy')
+    .lean()
   const schoolName = (targetSchool?.name as string) ?? 'Unknown school'
+  const schoolPhone = (targetSchool?.phone as string) ?? ''
+  const proprietorName = (targetSchool?.proprietorName as string) ?? ''
+  const proprietorPhone = (targetSchool?.proprietorPhone as string) ?? ''
   const studentName = `${target.firstName} ${target.lastName}`
+
+  // School has no dedicated "email" field — the most reliable contact address is
+  // the login email of the account that registered the school (School.createdBy).
+  const contactUser = targetSchool?.createdBy
+    ? await User.findById(targetSchool.createdBy).select('email').lean()
+    : null
+  const contactEmail = (contactUser?.email as string) ?? ''
 
   await FeeStandingRequest.create({
     requestingSchoolId: caller.schoolId,
@@ -190,6 +206,10 @@ export async function requestFeeStandingReport(
       exitNotes: target.exitNotes ?? '',
       classLevel: target.classLevel,
       schoolName,
+      schoolPhone,
+      proprietorName,
+      proprietorPhone,
+      contactEmail,
     },
     status: 'fulfilled',
   })
@@ -222,6 +242,10 @@ export async function requestFeeStandingReport(
       currentBalance: target.currentBalance,
       exitNotes: target.exitNotes ?? '',
       tcCertificateNumber: target.tcCertificateNumber ?? '',
+      schoolPhone,
+      proprietorName,
+      proprietorPhone,
+      contactEmail,
     },
   }
 }
@@ -234,6 +258,10 @@ export type RecentRequest = {
   currentBalance: number
   matchScore: number
   createdAt: string
+  schoolPhone: string
+  proprietorName: string
+  proprietorPhone: string
+  contactEmail: string
 }
 
 export async function getRecentFeeStandingRequests(): Promise<RecentRequest[]> {
@@ -258,5 +286,9 @@ export async function getRecentFeeStandingRequests(): Promise<RecentRequest[]> {
     currentBalance: r.resultSnapshot.currentBalance,
     matchScore: r.matchScore as number,
     createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : new Date().toISOString(),
+    schoolPhone: r.resultSnapshot.schoolPhone ?? '',
+    proprietorName: r.resultSnapshot.proprietorName ?? '',
+    proprietorPhone: r.resultSnapshot.proprietorPhone ?? '',
+    contactEmail: r.resultSnapshot.contactEmail ?? '',
   }))
 }

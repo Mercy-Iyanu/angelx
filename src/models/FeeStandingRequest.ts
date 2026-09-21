@@ -6,6 +6,10 @@ export interface IFeeStandingSnapshot {
   exitNotes: string
   classLevel: string
   schoolName: string
+  schoolPhone: string
+  proprietorName: string
+  proprietorPhone: string
+  contactEmail: string
 }
 
 export interface IFeeStandingRequest extends Document {
@@ -35,6 +39,10 @@ const FeeStandingRequestSchema = new Schema<IFeeStandingRequest>(
       exitNotes: { type: String, default: '' },
       classLevel: { type: String, required: true },
       schoolName: { type: String, required: true },
+      schoolPhone: { type: String, default: '' },
+      proprietorName: { type: String, default: '' },
+      proprietorPhone: { type: String, default: '' },
+      contactEmail: { type: String, default: '' },
     },
     // Only 'fulfilled' exists today (auto-disclosure MVP) — kept as an enum so an
     // approval-required workflow ('pending'/'approved'/'denied') can be added later

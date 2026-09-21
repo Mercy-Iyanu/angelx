@@ -40,6 +40,32 @@ function initials(firstName: string, lastName: string) {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
+// Contact details for the school holding the record — so the requesting school
+// can actually follow up on a flagged balance, not just see the number.
+function SchoolContact({ report }: { report: FeeStandingResult }) {
+  const phone = report.proprietorPhone || report.schoolPhone
+  if (!report.contactEmail && !phone && !report.proprietorName) return null
+
+  return (
+    <div className="w-full mt-3 pt-3 border-t border-gray-200">
+      <dt className="text-xs text-gray-400 mb-1.5">School contact</dt>
+      <dd className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-900">
+        {report.proprietorName && <span>{report.proprietorName}</span>}
+        {report.contactEmail && (
+          <a href={`mailto:${report.contactEmail}`} className="text-blue-600 hover:underline">
+            {report.contactEmail}
+          </a>
+        )}
+        {phone && (
+          <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
+            {phone}
+          </a>
+        )}
+      </dd>
+    </div>
+  )
+}
+
 export default function SearchClient({
   verified,
   recentRequests,
@@ -271,6 +297,7 @@ export default function SearchClient({
                                   </div>
                                 )}
                               </div>
+                              <SchoolContact report={report} />
                             </td>
                           </tr>
                         )}
@@ -309,30 +336,54 @@ export default function SearchClient({
                       Balance
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Requested
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {recentRequests.map((r) => (
-                    <tr key={r.id}>
-                      <td className="px-4 py-3 font-medium text-gray-900">{r.pupilName}</td>
-                      <td className="px-4 py-3 text-gray-600">{r.schoolName}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusStyle(r.admissionStatus)}`}
+                  {recentRequests.map((r) => {
+                    const phone = r.proprietorPhone || r.schoolPhone
+                    return (
+                      <tr key={r.id}>
+                        <td className="px-4 py-3 font-medium text-gray-900">{r.pupilName}</td>
+                        <td className="px-4 py-3 text-gray-600">{r.schoolName}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusStyle(r.admissionStatus)}`}
+                          >
+                            {r.admissionStatus}
+                          </span>
+                        </td>
+                        <td
+                          className={`px-4 py-3 ${r.currentBalance > 0 ? "text-red-600 font-medium" : "text-gray-400"}`}
                         >
-                          {r.admissionStatus}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-4 py-3 ${r.currentBalance > 0 ? "text-red-600 font-medium" : "text-gray-400"}`}
-                      >
-                        {r.currentBalance > 0 ? formatBalance(r.currentBalance) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-gray-500">{formatDate(r.createdAt)}</td>
-                    </tr>
-                  ))}
+                          {r.currentBalance > 0 ? formatBalance(r.currentBalance) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          <div className="flex flex-col gap-0.5">
+                            {r.contactEmail && (
+                              <a
+                                href={`mailto:${r.contactEmail}`}
+                                className="text-blue-600 hover:underline"
+                              >
+                                {r.contactEmail}
+                              </a>
+                            )}
+                            {phone && (
+                              <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
+                                {phone}
+                              </a>
+                            )}
+                            {!r.contactEmail && !phone && "—"}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">{formatDate(r.createdAt)}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
