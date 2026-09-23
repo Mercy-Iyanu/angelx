@@ -7,6 +7,7 @@ export interface IStudent extends Document {
   dateOfBirth: Date
   gender: 'male' | 'female'
   classLevel: string
+  eid?: string
   admissionNumber?: string
   parentName?: string
   parentPhone?: string
@@ -30,6 +31,9 @@ const StudentSchema = new Schema<IStudent>(
     dateOfBirth: { type: Date, required: true },
     gender: { type: String, enum: ['male', 'female'], required: true },
     classLevel: { type: String, enum: CLASS_LEVELS, required: true },
+    // Global pupil identity, set by resolveEid() in src/actions/student.ts —
+    // sparse because existing pre-EID records won't have one.
+    eid: { type: String, trim: true, uppercase: true },
     admissionNumber: { type: String, trim: true },
     parentName: { type: String, trim: true },
     parentPhone: { type: String, trim: true },
@@ -61,6 +65,9 @@ StudentSchema.index({ lastName: 1, firstName: 1 })
 
 // TC certificate numbers are public verification references — unique across all schools
 StudentSchema.index({ tcCertificateNumber: 1 }, { unique: true, sparse: true })
+
+// EID is a pupil's identity across every school — globally unique, not per-school
+StudentSchema.index({ eid: 1 }, { unique: true, sparse: true })
 
 const Student: Model<IStudent> =
   mongoose.models.Student ?? mongoose.model<IStudent>('Student', StudentSchema)

@@ -11,6 +11,69 @@ import { getSession } from '@/lib/auth'
 import { sendBalanceInvoiceEmail } from '@/lib/email'
 import { uploadStudentPhoto, deleteStudentPhoto } from '@/lib/blob'
 import { CLASS_LEVELS } from '@/lib/student-constants'
+import { generateEid } from '@/lib/eid'
+import { scorePupilMatch } from '@/lib/match-score'
+
+// Above this score (see scorePupilMatch's weights), a cross-school candidate is
+// treated as unambiguously the same pupil for EID linking — deliberately
+// stricter than Phase 3 search's MIN_MATCH_SCORE, since this auto-links rather
+// than just surfacing a candidate for a human to review.
+const STRONG_EID_MATCH_SCORE = 70
+
+// Finds or mints this pupil's Education ID. If a pupil with a strongly-matching
+// name+DOB (or name+phone) already has an EID at a *different* school, they're
+// linked to it instead of getting a new one — otherwise a family could dodge a
+// flagged balance simply by re-registering as a "new" pupil elsewhere, which
+// would defeat the point of Phase 3's cross-school search. If more than one
+// candidate matches strongly, it's ambiguous — mint a fresh EID rather than
+// risk merging two different children's records.
+async function resolveEid(
+  candidate: {
+    firstName: string
+    lastName: string
+    dateOfBirth: Date
+    parentPhone?: string
+  },
+  ownSchoolId: string
+): Promise<string> {
+  const escapedLastName = candidate.lastName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+  const others = await Student.find({
+    schoolId: { $ne: ownSchoolId },
+    lastName: new RegExp(`^${escapedLastName}`, 'i'),
+    eid: { $exists: true, $nin: [null, ''] },
+  })
+    .select('firstName lastName dateOfBirth parentPhone eid')
+    .limit(50)
+    .lean()
+
+  const strongMatches = others.filter(
+    (o) =>
+      scorePupilMatch(
+        {
+          firstName: candidate.firstName,
+          lastName: candidate.lastName,
+          dateOfBirth: candidate.dateOfBirth.toISOString(),
+          parentPhone: candidate.parentPhone,
+        },
+        {
+          firstName: o.firstName as string,
+          lastName: o.lastName as string,
+          dateOfBirth: o.dateOfBirth as Date,
+          parentPhone: o.parentPhone as string | undefined,
+        }
+      ) >= STRONG_EID_MATCH_SCORE
+  )
+
+  if (strongMatches.length === 1) return strongMatches[0].eid as string
+
+  let eid = generateEid()
+  // Astronomically unlikely to collide, but EID is a unique index — guard anyway.
+  while (await Student.exists({ eid })) {
+    eid = generateEid()
+  }
+  return eid
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -24,6 +87,7 @@ function formatNaira(amount: number) {
 export type StudentFormState =
   | {
       success?: boolean
+      eid?: string
       errors?: {
         firstName?: string[]
         lastName?: string[]
@@ -133,17 +197,24 @@ export async function createStudent(
     }
   }
 
+  const dateOfBirth = new Date(raw.dateOfBirth)
+  const eid = await resolveEid(
+    { firstName: raw.firstName, lastName: raw.lastName, dateOfBirth, parentPhone: raw.parentPhone },
+    user.schoolId.toString()
+  )
+
   await Student.create({
     ...raw,
     gender: raw.gender as 'male' | 'female',
-    dateOfBirth: new Date(raw.dateOfBirth),
+    dateOfBirth,
     schoolId: user.schoolId,
     currentBalance,
     photoUrl,
+    eid,
   })
 
   revalidatePath('/dashboard/students')
-  return { success: true, message: 'Student added successfully.' }
+  return { success: true, message: 'Student added successfully.', eid }
 }
 
 export type ImportRow = {
@@ -223,10 +294,23 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       }
     }
 
-    if (rowErrors.length > 0) {
+    if (rowErrors.length > 0 || !dob) {
       errors.push(`Row ${rowNum}: invalid ${rowErrors.join(', ')}`)
       continue
     }
+
+    // Sequential (not batched) so each row can check for an existing EID before
+    // minting a new one — slower for very large CSVs, acceptable at the scale a
+    // single school's roll import runs at.
+    const eid = await resolveEid(
+      {
+        firstName: row.firstName.trim(),
+        lastName: row.lastName.trim(),
+        dateOfBirth: dob,
+        parentPhone: row.parentPhone?.trim() || undefined,
+      },
+      user.schoolId.toString()
+    )
 
     docs.push({
       firstName: row.firstName.trim(),
@@ -234,6 +318,7 @@ export async function importStudents(rows: ImportRow[]): Promise<ImportResult> {
       dateOfBirth: dob,
       gender: gender as 'male' | 'female',
       classLevel: row.classLevel,
+      eid,
       admissionNumber: row.admissionNumber?.trim() || undefined,
       parentName: row.parentName?.trim() || undefined,
       parentPhone: row.parentPhone?.trim() || undefined,

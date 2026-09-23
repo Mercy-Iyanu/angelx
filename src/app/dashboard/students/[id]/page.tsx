@@ -173,6 +173,11 @@ export default async function StudentDetailPage({
 
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5 px-6 py-6">
           <Field
+            label="Education ID (EID)"
+            value={(student.eid as string) || "—"}
+            className="font-mono"
+          />
+          <Field
             label="Admission number"
             value={(student.admissionNumber as string) || "—"}
           />

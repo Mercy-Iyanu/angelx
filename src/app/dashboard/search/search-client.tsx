@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import { Fragment, useActionState, useState, useTransition } from "react"
+import { Fragment, useActionState, useState, useTransition } from "react";
 import {
   searchEnrollment,
   requestFeeStandingReport,
   type CrossSchoolMatch,
   type FeeStandingResult,
   type RecentRequest,
-} from "@/actions/crossSchool"
+} from "@/actions/crossSchool";
 
 const inp =
-  "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white"
+  "w-full rounded-lg border text-gray-700 border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white";
 
 function formatBalance(amount: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
-  }).format(amount)
+  }).format(amount);
 }
 
 function formatDate(iso: string) {
@@ -24,7 +24,7 @@ function formatDate(iso: string) {
     day: "numeric",
     month: "short",
     year: "numeric",
-  })
+  });
 }
 
 const statusStyle = (s: string) =>
@@ -34,17 +34,17 @@ const statusStyle = (s: string) =>
       ? "bg-gray-100 text-gray-600"
       : s === "Exited-Unresolved"
         ? "bg-red-100 text-red-700"
-        : "bg-yellow-100 text-yellow-700"
+        : "bg-yellow-100 text-yellow-700";
 
 function initials(firstName: string, lastName: string) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 }
 
 // Contact details for the school holding the record — so the requesting school
 // can actually follow up on a flagged balance, not just see the number.
 function SchoolContact({ report }: { report: FeeStandingResult }) {
-  const phone = report.proprietorPhone || report.schoolPhone
-  if (!report.contactEmail && !phone && !report.proprietorName) return null
+  const phone = report.proprietorPhone || report.schoolPhone;
+  if (!report.contactEmail && !phone && !report.proprietorName) return null;
 
   return (
     <div className="w-full mt-3 pt-3 border-t border-gray-200">
@@ -52,7 +52,10 @@ function SchoolContact({ report }: { report: FeeStandingResult }) {
       <dd className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-gray-900">
         {report.proprietorName && <span>{report.proprietorName}</span>}
         {report.contactEmail && (
-          <a href={`mailto:${report.contactEmail}`} className="text-blue-600 hover:underline">
+          <a
+            href={`mailto:${report.contactEmail}`}
+            className="text-blue-600 hover:underline"
+          >
             {report.contactEmail}
           </a>
         )}
@@ -63,35 +66,46 @@ function SchoolContact({ report }: { report: FeeStandingResult }) {
         )}
       </dd>
     </div>
-  )
+  );
 }
 
 export default function SearchClient({
   verified,
   recentRequests,
 }: {
-  verified: boolean
-  recentRequests: RecentRequest[]
+  verified: boolean;
+  recentRequests: RecentRequest[];
 }) {
-  const [state, formAction, pending] = useActionState(searchEnrollment, undefined)
-  const [reports, setReports] = useState<Record<string, FeeStandingResult>>({})
-  const [requesting, setRequesting] = useState<string | null>(null)
-  const [requestError, setRequestError] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [state, formAction, pending] = useActionState(
+    searchEnrollment,
+    undefined,
+  );
+  const [reports, setReports] = useState<Record<string, FeeStandingResult>>({});
+  const [requesting, setRequesting] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleRequest = (match: CrossSchoolMatch) => {
-    setRequestError(null)
-    setRequesting(match.studentId)
+    setRequestError(null);
+    setRequesting(match.studentId);
     startTransition(async () => {
-      const result = await requestFeeStandingReport(match.studentId, match.matchScore)
-      setRequesting(null)
+      const result = await requestFeeStandingReport(
+        match.studentId,
+        match.matchScore,
+      );
+      setRequesting(null);
       if (result?.success && result.result) {
-        setReports((prev) => ({ ...prev, [match.studentId]: result.result as FeeStandingResult }))
+        setReports((prev) => ({
+          ...prev,
+          [match.studentId]: result.result as FeeStandingResult,
+        }));
       } else {
-        setRequestError(result?.message ?? "Could not fetch fee standing report.")
+        setRequestError(
+          result?.message ?? "Could not fetch fee standing report.",
+        );
       }
-    })
-  }
+    });
+  };
 
   if (!verified) {
     return (
@@ -115,23 +129,28 @@ export default function SearchClient({
           Fee Standing Search is locked
         </p>
         <p className="text-xs text-gray-400 max-w-sm">
-          This searches pupil records across other NAPPS schools, so it&apos;s only
-          available once your school&apos;s NAPPS registration is verified. Check
-          your{" "}
-          <a href="/dashboard/profile" className="text-blue-600 hover:underline">
+          This searches pupil records across other NAPPS schools, so it&apos;s
+          only available once your school&apos;s NAPPS registration is verified.
+          Check your{" "}
+          <a
+            href="/dashboard/profile"
+            className="text-blue-600 hover:underline"
+          >
             profile
           </a>{" "}
           for verification status.
         </p>
       </div>
-    )
+    );
   }
 
-  const results = state?.results ?? []
+  const results = state?.results ?? [];
 
   return (
     <>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Fee Standing Search</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+        Fee Standing Search
+      </h1>
 
       <form
         action={formAction}
@@ -140,18 +159,40 @@ export default function SearchClient({
         <p className="text-sm font-semibold text-gray-700 mb-3">
           Find a pupil at another NAPPS school
         </p>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium text-gray-700 mb-1 block">
+            Education ID (EID)
+          </label>
+          <input
+            name="eid"
+            placeholder="e.g. EID-A1B2C3D4"
+            className={`${inp} font-mono uppercase`}
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Fastest and most accurate way to look someone up — skips the fields
+            below.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs text-gray-400">or search by name</span>
+          <div className="h-px flex-1 bg-gray-200" />
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">
-              First name *
+              First name
             </label>
-            <input name="firstName" required className={inp} />
+            <input name="firstName" className={inp} />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">
-              Last name *
+              Last name
             </label>
-            <input name="lastName" required className={inp} />
+            <input name="lastName" className={inp} />
           </div>
           <div>
             <label className="text-xs font-medium text-gray-700 mb-1 block">
@@ -213,13 +254,16 @@ export default function SearchClient({
               <tbody className="divide-y divide-gray-100">
                 {results.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                    <td
+                      colSpan={6}
+                      className="px-4 py-8 text-center text-sm text-gray-400"
+                    >
                       No matches found across other schools.
                     </td>
                   </tr>
                 ) : (
                   results.map((m) => {
-                    const report = reports[m.studentId]
+                    const report = reports[m.studentId];
                     return (
                       <Fragment key={m.studentId}>
                         <tr className="align-top">
@@ -232,12 +276,22 @@ export default function SearchClient({
                                 {m.firstName} {m.lastName}
                                 <div className="text-xs text-gray-400">
                                   {formatDate(m.dateOfBirth)}
+                                  {m.eid && (
+                                    <>
+                                      {" · "}
+                                      <span className="font-mono">{m.eid}</span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-gray-600">{m.schoolName}</td>
-                          <td className="px-4 py-3 text-gray-600">{m.classLevel}</td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {m.schoolName}
+                          </td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {m.classLevel}
+                          </td>
                           <td className="px-4 py-3">
                             <span
                               className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusStyle(m.admissionStatus)}`}
@@ -245,12 +299,16 @@ export default function SearchClient({
                               {m.admissionStatus}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-gray-600">{m.matchScore}%</td>
+                          <td className="px-4 py-3 text-gray-600">
+                            {m.matchScore}%
+                          </td>
                           <td className="px-4 py-3 text-right">
                             {!report && (
                               <button
                                 onClick={() => handleRequest(m)}
-                                disabled={isPending && requesting === m.studentId}
+                                disabled={
+                                  isPending && requesting === m.studentId
+                                }
                                 className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                               >
                                 {isPending && requesting === m.studentId
@@ -277,20 +335,38 @@ export default function SearchClient({
                                   </dd>
                                 </div>
                                 <div>
-                                  <dt className="text-xs text-gray-400">Admission status</dt>
+                                  <dt className="text-xs text-gray-400">
+                                    Admission status
+                                  </dt>
                                   <dd className="text-sm text-gray-900">
                                     {report.admissionStatus}
                                   </dd>
                                 </div>
+                                {report.eid && (
+                                  <div>
+                                    <dt className="text-xs text-gray-400">
+                                      Education ID
+                                    </dt>
+                                    <dd className="text-sm font-mono text-gray-900">
+                                      {report.eid}
+                                    </dd>
+                                  </div>
+                                )}
                                 {report.exitNotes && (
                                   <div>
-                                    <dt className="text-xs text-gray-400">Exit notes</dt>
-                                    <dd className="text-sm text-gray-900">{report.exitNotes}</dd>
+                                    <dt className="text-xs text-gray-400">
+                                      Exit notes
+                                    </dt>
+                                    <dd className="text-sm text-gray-900">
+                                      {report.exitNotes}
+                                    </dd>
                                   </div>
                                 )}
                                 {report.tcCertificateNumber && (
                                   <div>
-                                    <dt className="text-xs text-gray-400">TC number</dt>
+                                    <dt className="text-xs text-gray-400">
+                                      TC number
+                                    </dt>
                                     <dd className="text-sm text-gray-900">
                                       {report.tcCertificateNumber}
                                     </dd>
@@ -302,7 +378,7 @@ export default function SearchClient({
                           </tr>
                         )}
                       </Fragment>
-                    )
+                    );
                   })
                 )}
               </tbody>
@@ -316,7 +392,9 @@ export default function SearchClient({
           Recent requests from your school
         </p>
         {recentRequests.length === 0 ? (
-          <p className="text-xs text-gray-400">No fee standing reports requested yet.</p>
+          <p className="text-xs text-gray-400">
+            No fee standing reports requested yet.
+          </p>
         ) : (
           <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
             <div className="overflow-x-auto">
@@ -345,11 +423,15 @@ export default function SearchClient({
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {recentRequests.map((r) => {
-                    const phone = r.proprietorPhone || r.schoolPhone
+                    const phone = r.proprietorPhone || r.schoolPhone;
                     return (
                       <tr key={r.id}>
-                        <td className="px-4 py-3 font-medium text-gray-900">{r.pupilName}</td>
-                        <td className="px-4 py-3 text-gray-600">{r.schoolName}</td>
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {r.pupilName}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {r.schoolName}
+                        </td>
                         <td className="px-4 py-3">
                           <span
                             className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${statusStyle(r.admissionStatus)}`}
@@ -360,7 +442,9 @@ export default function SearchClient({
                         <td
                           className={`px-4 py-3 ${r.currentBalance > 0 ? "text-red-600 font-medium" : "text-gray-400"}`}
                         >
-                          {r.currentBalance > 0 ? formatBalance(r.currentBalance) : "—"}
+                          {r.currentBalance > 0
+                            ? formatBalance(r.currentBalance)
+                            : "—"}
                         </td>
                         <td className="px-4 py-3 text-gray-500">
                           <div className="flex flex-col gap-0.5">
@@ -373,16 +457,21 @@ export default function SearchClient({
                               </a>
                             )}
                             {phone && (
-                              <a href={`tel:${phone}`} className="text-blue-600 hover:underline">
+                              <a
+                                href={`tel:${phone}`}
+                                className="text-blue-600 hover:underline"
+                              >
                                 {phone}
                               </a>
                             )}
                             {!r.contactEmail && !phone && "—"}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-500">{formatDate(r.createdAt)}</td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {formatDate(r.createdAt)}
+                        </td>
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
@@ -391,5 +480,5 @@ export default function SearchClient({
         )}
       </div>
     </>
-  )
+  );
 }

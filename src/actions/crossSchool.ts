@@ -64,6 +64,7 @@ export type CrossSchoolMatch = {
   schoolName: string
   admissionStatus: string
   matchScore: number
+  eid: string
 }
 
 export type SearchState =
@@ -81,13 +82,51 @@ export async function searchEnrollment(
   const caller = await getVerifiedCaller()
   if (!caller.ok) return { message: caller.message }
 
+  const eid = (formData.get('eid') as string)?.trim().toUpperCase()
+
+  // EID is an exact, unambiguous identity lookup — preferred over name matching
+  // whenever it's known, since it skips the fuzzy-score guesswork entirely.
+  if (eid) {
+    const match = await Student.findOne({ eid })
+      .select('firstName lastName dateOfBirth classLevel schoolId admissionStatus eid')
+      .lean()
+
+    if (!match) {
+      return { message: `No pupil found with EID ${eid}.` }
+    }
+
+    if (match.schoolId.toString() === caller.schoolId) {
+      return { message: 'This EID belongs to a pupil already enrolled at your own school.' }
+    }
+
+    const school = await School.findById(match.schoolId).select('name').lean()
+
+    return {
+      success: true,
+      results: [
+        {
+          studentId: match._id.toString(),
+          firstName: match.firstName as string,
+          lastName: match.lastName as string,
+          dateOfBirth: (match.dateOfBirth as Date).toISOString(),
+          classLevel: match.classLevel as string,
+          schoolId: match.schoolId.toString(),
+          schoolName: (school?.name as string) ?? 'Unknown school',
+          admissionStatus: match.admissionStatus as string,
+          matchScore: 100,
+          eid: match.eid as string,
+        },
+      ],
+    }
+  }
+
   const firstName = (formData.get('firstName') as string)?.trim()
   const lastName = (formData.get('lastName') as string)?.trim()
   const dateOfBirth = (formData.get('dateOfBirth') as string)?.trim() || undefined
   const parentPhone = (formData.get('parentPhone') as string)?.trim() || undefined
 
   if (!firstName || !lastName) {
-    return { message: 'Enter at least a first and last name to search.' }
+    return { message: 'Enter a pupil\'s EID, or a first and last name, to search.' }
   }
 
   const escapedLastName = lastName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -98,7 +137,7 @@ export async function searchEnrollment(
     schoolId: { $ne: caller.schoolId },
     lastName: new RegExp(`^${escapedLastName}`, 'i'),
   })
-    .select('firstName lastName dateOfBirth classLevel schoolId admissionStatus parentPhone')
+    .select('firstName lastName dateOfBirth classLevel schoolId admissionStatus parentPhone eid')
     .limit(200)
     .lean()
 
@@ -136,6 +175,7 @@ export async function searchEnrollment(
       schoolName: schoolNameById.get(c.schoolId.toString()) ?? 'Unknown school',
       admissionStatus: c.admissionStatus as string,
       matchScore,
+      eid: (c.eid as string | undefined) ?? '',
     }))
 
   return { success: true, results }
@@ -150,6 +190,7 @@ export type FeeStandingResult = {
   currentBalance: number
   exitNotes: string
   tcCertificateNumber: string
+  eid: string
   schoolPhone: string
   proprietorName: string
   proprietorPhone: string
@@ -242,6 +283,7 @@ export async function requestFeeStandingReport(
       currentBalance: target.currentBalance,
       exitNotes: target.exitNotes ?? '',
       tcCertificateNumber: target.tcCertificateNumber ?? '',
+      eid: target.eid ?? '',
       schoolPhone,
       proprietorName,
       proprietorPhone,

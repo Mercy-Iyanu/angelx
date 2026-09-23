@@ -11,6 +11,7 @@ type Student = {
   lastName: string
   gender: string
   classLevel: string
+  eid: string
   admissionNumber: string
   parentName: string
   enrollmentDate: string
@@ -280,6 +281,9 @@ export default function StudentsClient({
                       Gender
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                      EID
+                    </th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Adm. No.
                     </th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
@@ -332,6 +336,9 @@ export default function StudentsClient({
                         </td>
                         <td className="px-4 py-3 text-gray-600">{s.classLevel}</td>
                         <td className="px-4 py-3 text-gray-600 capitalize">{s.gender}</td>
+                        <td className="px-4 py-3 text-gray-500 font-mono text-xs">
+                          {s.eid || "—"}
+                        </td>
                         <td className="px-4 py-3 text-gray-500">
                           {s.admissionNumber || "—"}
                         </td>
@@ -355,7 +362,7 @@ export default function StudentsClient({
                   ) : (
                     <tr>
                       <td
-                        colSpan={8}
+                        colSpan={9}
                         className="px-4 py-8 text-center text-sm text-gray-400"
                       >
                         No students match &ldquo;{search}&rdquo;

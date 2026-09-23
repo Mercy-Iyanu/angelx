@@ -32,7 +32,7 @@ export default async function StudentsPage() {
   const students = user.schoolId
     ? await Student.find({ schoolId: user.schoolId })
         .select(
-          'firstName lastName gender classLevel admissionNumber parentName enrollmentDate admissionStatus currentBalance createdAt photoUrl'
+          'firstName lastName gender classLevel eid admissionNumber parentName enrollmentDate admissionStatus currentBalance createdAt photoUrl'
         )
         .sort({ createdAt: -1 })
         .lean()
@@ -44,6 +44,7 @@ export default async function StudentsPage() {
     lastName: s.lastName as string,
     gender: s.gender as string,
     classLevel: s.classLevel as string,
+    eid: (s.eid as string | undefined) ?? '',
     admissionNumber: (s.admissionNumber as string | undefined) ?? '',
     parentName: (s.parentName as string | undefined) ?? '',
     enrollmentDate:

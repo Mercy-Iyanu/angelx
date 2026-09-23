@@ -27,7 +27,11 @@ function StudentForm({ onSuccess }: { onSuccess: () => void }) {
           </svg>
         </div>
         <p className="text-sm font-semibold text-gray-900 mb-1">Student added!</p>
-        <p className="text-xs text-gray-500 mb-6">{state.message}</p>
+        <p className="text-xs text-gray-500 mb-1">{state.message}</p>
+        <p className="text-xs text-gray-500 mb-6">
+          Education ID:{" "}
+          <span className="font-mono font-semibold text-gray-900">{state.eid}</span>
+        </p>
         <button
           onClick={onSuccess}
           className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
