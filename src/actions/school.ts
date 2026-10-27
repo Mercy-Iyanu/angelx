@@ -114,5 +114,5 @@ export async function createSchool(
   await User.findByIdAndUpdate(user._id, { schoolId: school._id })
 
   revalidatePath('/dashboard')
-  return { success: true, message: 'Your school has been registered successfully. Welcome to AngelX!' }
+  return { success: true, message: 'Your school has been registered successfully. Welcome to School Debit Alert!' }
 }

@@ -67,7 +67,8 @@ export default function ProfileClient({
               )}
               {status === "verified" && (
                 <p className="text-sm text-gray-500">
-                  Your school is verified and has full access to AngelX.
+                  Your school is verified and has full access to School Debit
+                  Alert.
                 </p>
               )}
               {status === "rejected" && (

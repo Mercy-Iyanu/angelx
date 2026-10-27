@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import SchoolRegistrationModal from "./school-registration-form"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import SchoolRegistrationModal from "./school-registration-form";
 
-type School = { name: string; nappsVerificationStatus: string }
+type School = { name: string; nappsVerificationStatus: string };
 type Stats = {
-  total: number
-  active: number
-  male: number
-  female: number
-  byClass: { level: string; count: number }[]
-}
+  total: number;
+  active: number;
+  male: number;
+  female: number;
+  byClass: { level: string; count: number }[];
+};
 
 export default function DashboardContent({
   school,
   stats,
 }: {
-  school: School | null
-  stats: Stats
+  school: School | null;
+  stats: Stats;
 }) {
-  const [modalOpen, setModalOpen] = useState(false)
-  const router = useRouter()
+  const [modalOpen, setModalOpen] = useState(false);
+  const router = useRouter();
 
   const handleSuccess = () => {
-    setModalOpen(false)
-    router.refresh()
-  }
+    setModalOpen(false);
+    router.refresh();
+  };
 
   return (
     <>
@@ -45,7 +45,8 @@ export default function DashboardContent({
       {!school ? (
         <div className="mt-6">
           <p className="text-sm text-gray-500 mb-4">
-            Complete your school registration to get full access to AngelX.
+            Complete your school registration to get full access to School Debit
+            Alert.
           </p>
           <button
             onClick={() => setModalOpen(true)}
@@ -133,10 +134,13 @@ export default function DashboardContent({
                   <div className="flex flex-col gap-3">
                     {stats.byClass.map((item) => {
                       const pct = Math.round(
-                        (item.count / stats.byClass[0].count) * 100
-                      )
+                        (item.count / stats.byClass[0].count) * 100,
+                      );
                       return (
-                        <div key={item.level} className="flex items-center gap-3">
+                        <div
+                          key={item.level}
+                          className="flex items-center gap-3"
+                        >
                           <span className="text-xs text-gray-500 w-28 shrink-0 truncate">
                             {item.level}
                           </span>
@@ -150,7 +154,7 @@ export default function DashboardContent({
                             {item.count}
                           </span>
                         </div>
-                      )
+                      );
                     })}
                   </div>
                 )}
@@ -172,7 +176,7 @@ export default function DashboardContent({
         </div>
       )}
     </>
-  )
+  );
 }
 
 const colorMap = {
@@ -196,7 +200,7 @@ const colorMap = {
     icon: "text-rose-600",
     value: "text-rose-700",
   },
-}
+};
 
 function StatCard({
   label,
@@ -204,15 +208,17 @@ function StatCard({
   color,
   icon,
 }: {
-  label: string
-  value: number
-  color: keyof typeof colorMap
-  icon: React.ReactNode
+  label: string;
+  value: number;
+  color: keyof typeof colorMap;
+  icon: React.ReactNode;
 }) {
-  const c = colorMap[color]
+  const c = colorMap[color];
   return (
     <div className="rounded-xl border border-gray-200 bg-white px-5 py-4 flex items-center gap-4">
-      <div className={`shrink-0 w-10 h-10 rounded-lg ${c.bg} flex items-center justify-center`}>
+      <div
+        className={`shrink-0 w-10 h-10 rounded-lg ${c.bg} flex items-center justify-center`}
+      >
         <svg
           className={`w-5 h-5 ${c.icon}`}
           fill="none"
@@ -230,7 +236,7 @@ function StatCard({
         <p className="text-xs text-gray-500 mt-1 truncate">{label}</p>
       </div>
     </div>
-  )
+  );
 }
 
 function GenderBreakdown({
@@ -238,12 +244,12 @@ function GenderBreakdown({
   female,
   total,
 }: {
-  male: number
-  female: number
-  total: number
+  male: number;
+  female: number;
+  total: number;
 }) {
-  const malePct = total > 0 ? Math.round((male / total) * 100) : 50
-  const femalePct = total > 0 ? Math.round((female / total) * 100) : 50
+  const malePct = total > 0 ? Math.round((male / total) * 100) : 50;
+  const femalePct = total > 0 ? Math.round((female / total) * 100) : 50;
 
   return (
     <div className="flex flex-col gap-4">
@@ -291,5 +297,5 @@ function GenderBreakdown({
         </div>
       </div>
     </div>
-  )
+  );
 }

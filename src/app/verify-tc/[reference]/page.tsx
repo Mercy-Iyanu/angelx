@@ -78,7 +78,9 @@ export default async function VerifyTcPage({
                 <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
                   Class at exit
                 </dt>
-                <dd className="text-sm text-gray-900">{student.classLevel as string}</dd>
+                <dd className="text-sm text-gray-900">
+                  {student.classLevel as string}
+                </dd>
               </div>
               <div>
                 <dt className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
@@ -97,7 +99,9 @@ export default async function VerifyTcPage({
                   Issued
                 </dt>
                 <dd className="text-sm text-gray-900">
-                  {student.tcIssuedAt ? formatDate(student.tcIssuedAt as Date) : "—"}
+                  {student.tcIssuedAt
+                    ? formatDate(student.tcIssuedAt as Date)
+                    : "—"}
                 </dd>
               </div>
             </dl>
@@ -117,7 +121,7 @@ export default async function VerifyTcPage({
           href="/"
           className="inline-flex mt-8 text-xs text-gray-400 hover:text-gray-600 transition-colors"
         >
-          AngelX Transfer Certificate Registry
+          School Debit Alert Transfer Certificate Registry
         </Link>
       </div>
     </div>

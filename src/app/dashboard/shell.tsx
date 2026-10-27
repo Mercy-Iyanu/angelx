@@ -1,48 +1,76 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { signOut } from "@/actions/auth"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { signOut } from "@/actions/auth";
 
-type School = { name: string; nappsVerificationStatus: string }
+type School = { name: string; nappsVerificationStatus: string };
 
 const statusStyle = (s: string) =>
   s === "verified"
     ? "bg-green-100 text-green-700"
     : s === "rejected"
       ? "bg-red-100 text-red-700"
-      : "bg-yellow-100 text-yellow-700"
+      : "bg-yellow-100 text-yellow-700";
 
 const HOME_ICON =
-  "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+  "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6";
 const STUDENTS_ICON =
-  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+  "M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z";
 const USER_ICON =
-  "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-const SEARCH_ICON = "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+  "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z";
+const SEARCH_ICON = "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z";
 
 export default function DashboardShell({
   userEmail,
   school,
   children,
 }: {
-  userEmail: string
-  school: School | null
-  children: React.ReactNode
+  userEmail: string;
+  school: School | null;
+  children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
 
   const navItems = (
     <>
-      <NavItem href="/dashboard" label="Dashboard" icon={HOME_ICON} active={pathname === "/dashboard"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-      <NavItem href="/dashboard/students" label="Students" icon={STUDENTS_ICON} active={pathname.startsWith("/dashboard/students")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-      <NavItem href="/dashboard/search" label="Fee Standing Search" icon={SEARCH_ICON} active={pathname.startsWith("/dashboard/search")} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
-      <NavItem href="/dashboard/profile" label="Profile" icon={USER_ICON} active={pathname === "/dashboard/profile"} collapsed={collapsed} onClick={() => setMobileOpen(false)} />
+      <NavItem
+        href="/dashboard"
+        label="Dashboard"
+        icon={HOME_ICON}
+        active={pathname === "/dashboard"}
+        collapsed={collapsed}
+        onClick={() => setMobileOpen(false)}
+      />
+      <NavItem
+        href="/dashboard/students"
+        label="Students"
+        icon={STUDENTS_ICON}
+        active={pathname.startsWith("/dashboard/students")}
+        collapsed={collapsed}
+        onClick={() => setMobileOpen(false)}
+      />
+      <NavItem
+        href="/dashboard/search"
+        label="Fee Standing Search"
+        icon={SEARCH_ICON}
+        active={pathname.startsWith("/dashboard/search")}
+        collapsed={collapsed}
+        onClick={() => setMobileOpen(false)}
+      />
+      <NavItem
+        href="/dashboard/profile"
+        label="Profile"
+        icon={USER_ICON}
+        active={pathname === "/dashboard/profile"}
+        collapsed={collapsed}
+        onClick={() => setMobileOpen(false)}
+      />
     </>
-  )
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -55,14 +83,28 @@ export default function DashboardShell({
             className="sm:hidden p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors shrink-0"
             aria-label="Open menu"
           >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             </svg>
           </button>
-          <span className="font-semibold text-gray-900 shrink-0">AngelX</span>
+          <span className="font-semibold text-gray-900 shrink-0">
+            School Debit Alert
+          </span>
           {school && (
             <>
-              <span className="text-gray-300 select-none shrink-0 hidden sm:inline">·</span>
+              <span className="text-gray-300 select-none shrink-0 hidden sm:inline">
+                ·
+              </span>
               <span className="text-sm font-medium text-gray-700 truncate hidden sm:block">
                 {school.name} NAPPS
               </span>
@@ -76,7 +118,9 @@ export default function DashboardShell({
           )}
         </div>
         <div className="flex items-center gap-4 shrink-0">
-          <span className="text-sm text-gray-500 hidden sm:block">{userEmail}</span>
+          <span className="text-sm text-gray-500 hidden sm:block">
+            {userEmail}
+          </span>
           <form action={signOut}>
             <button
               type="submit"
@@ -92,7 +136,10 @@ export default function DashboardShell({
         {/* Mobile sidebar overlay */}
         {mobileOpen && (
           <div className="sm:hidden fixed inset-0 z-40 flex">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setMobileOpen(false)}
+            />
             <aside className="relative z-50 w-64 bg-white border-r border-gray-200 flex flex-col py-4">
               <div className="flex justify-end px-2 mb-3">
                 <button
@@ -100,8 +147,18 @@ export default function DashboardShell({
                   className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
                   aria-label="Close menu"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -144,10 +201,12 @@ export default function DashboardShell({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8 overflow-auto">{children}</main>
+        <main className="flex-1 px-4 py-6 sm:px-8 sm:py-8 overflow-auto">
+          {children}
+        </main>
       </div>
     </div>
-  )
+  );
 }
 
 function NavItem({
@@ -158,12 +217,12 @@ function NavItem({
   collapsed,
   onClick,
 }: {
-  href: string
-  label: string
-  icon: string
-  active: boolean
-  collapsed: boolean
-  onClick?: () => void
+  href: string;
+  label: string;
+  icon: string;
+  active: boolean;
+  collapsed: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Link
@@ -185,5 +244,5 @@ function NavItem({
       </svg>
       {!collapsed && <span>{label}</span>}
     </Link>
-  )
+  );
 }
